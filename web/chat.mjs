@@ -1,60 +1,35 @@
+import { aclaracionCaida, preguntas } from './cuestionario.mjs';
 import { evaluarPerfil } from './perfil.mjs';
 
-const preguntas = {
-  plazo: {
-    texto: '¿En cuánto tiempo necesitarías el dinero que invertirías?',
-    opciones: [
-      ['corto', 'Menos de 1 año'],
-      ['medio', 'De 1 a 3 años'],
-      ['largo', 'Más de 3 años'],
-    ],
-  },
-  caida: {
-    texto: 'Si tu inversión pierde valor, ¿a partir de qué caída considerarías tomar medidas?',
-    opciones: [
-      ['5', 'Al caer 5 %'],
-      ['10', 'Al caer 10 %'],
-      ['20', 'Al caer 20 %'],
-      ['sin-umbral', 'No me inquieto'],
-    ],
-  },
-};
-
-preguntas.aclaracion = {
-  texto: 'Para entender esa respuesta, piensa en una caída concreta. ¿A partir de qué caída considerarías tomar medidas?',
-  opciones: preguntas.caida.opciones.slice(0, 3),
-};
-
+const orden = Object.keys(preguntas);
+const catalogo = { ...preguntas, aclaracion: aclaracionCaida };
 const perfiles = {
-  conservador: {
-    nombre: 'Conservador',
-    descripcion: 'Tus respuestas apuntan a priorizar la estabilidad y la disponibilidad de tu dinero.',
-  },
-  moderado: {
-    nombre: 'Moderado',
-    descripcion: 'Tus respuestas indican que aceptarías ciertas pérdidas, con un límite de tiempo o de caída.',
-  },
-  propenso: {
-    nombre: 'Propenso al riesgo',
-    descripcion: 'Tus respuestas indican que tienes un plazo largo y que tomarías medidas ante una caída mayor.',
-  },
+  conservador: 'Conservador',
+  moderado: 'Moderado',
+  propenso: 'Propenso al riesgo',
 };
-
-const motivos = {
+const tolerancias = {
+  conservador: 'baja',
+  moderado: 'intermedia',
+  propenso: 'alta',
+};
+const limites = {
+  liquidez: 'Dijiste que tu prioridad es disponer del dinero. Esa necesidad fija el límite en conservador.',
   'plazo-corto': 'Necesitarías el dinero en menos de un año. Ese plazo deja poco tiempo para esperar una recuperación si la inversión pierde valor.',
-  'caida-5': 'Considerarías tomar medidas al caer 5 %. Esa respuesta indica que una caída pequeña ya influiría en tu decisión.',
-  'plazo-medio': 'Necesitarías el dinero en un plazo de uno a tres años. El cuestionario toma ese plazo como un punto intermedio.',
-  'plazo-largo': 'Necesitarías el dinero en más de tres años. Ese plazo da más tiempo para esperar si la inversión pierde valor.',
-  'caida-10': 'Considerarías tomar medidas al caer 10 %. Ese límite cuenta como una tolerancia intermedia en el cuestionario.',
-  'caida-20': 'Considerarías tomar medidas al caer 20 %. El cuestionario toma esa respuesta como una tolerancia más alta.',
-  'sin-umbral': 'Dijiste que una caída no te inquieta. Con un plazo de uno a tres años, el cuestionario te ubica en el perfil moderado.',
+  ingresos: 'Quieres recibir ingresos periódicos. En este cuestionario, ese objetivo pone el límite en moderado.',
+  'plazo-medio': 'Necesitarías el dinero en uno a tres años. Para ese plazo, el nivel máximo del cuestionario es moderado.',
+  'objetivo-y-plazo': 'Elegiste un objetivo de crecimiento o especulación y un plazo de más de tres años. Con esas respuestas, la tolerancia puede llevar a cualquiera de los tres perfiles.',
 };
 
 const glosario = [
-  [/\b(liquidez|liquido|disponibilidad)\b/, 'La liquidez es la facilidad de convertir una inversión en dinero disponible. Si necesitas usar el dinero pronto, importa cuánto tardarías en disponer de él.'],
+  [/\b(liquidez|liquido|disponibilidad)\b/, 'La liquidez es la facilidad de convertir una inversión en dinero disponible. Si necesitas el dinero pronto, importa cuánto tardarías en disponer de él.'],
   [/\b(horizonte|plazo|tiempo)\b/, 'El horizonte de inversión es el tiempo que puedes dejar invertido el dinero antes de necesitarlo.'],
-  [/\b(caida|caer|perdida|perder|tolerancia|baja)\b/, 'Una caída es una pérdida de valor. Si una inversión vale $100 y baja 10 %, pasa a valer $90. La tolerancia indica qué caída te haría considerar tomar medidas.'],
-  [/\b(riesgo|volatilidad|fluctuacion)\b/, 'El riesgo incluye la posibilidad de que tu inversión pierda valor cuando necesites el dinero. El perfil reúne lo que dices sobre tu plazo y tu tolerancia a pérdidas.'],
+  [/\b(caida|caer|perdidas?|perder|tolerancia|baja)\b/, 'Una caída es una pérdida de valor. Si una inversión vale $100 y baja 10 %, pasa a valer $90. La tolerancia indica qué caída te haría considerar tomar medidas.'],
+  [/\b(riesgo|volatilidad|fluctuaciones?)\b/, 'El riesgo incluye la posibilidad de que tu inversión pierda valor. La volatilidad describe cuánto cambia ese valor con el tiempo.'],
+  [/\b(rendimiento|rendimientos)\b/, 'El rendimiento es cuánto gana o pierde una inversión respecto a su valor inicial.'],
+  [/\b(especulacion|especulativo|especular)\b/, 'Especular es buscar ganancias a partir de cambios de precio. Si el precio se mueve en la otra dirección, también puedes perder.'],
+  [/\b(sofisticado|sofisticada)\b/, 'En esta pregunta registramos cómo describes tu experiencia. El sistema usa tu objetivo, tu plazo y tus respuestas sobre pérdidas para determinar el nivel de riesgo.'],
+  [/\bcasa de bolsa\b/, 'Una casa de bolsa es un intermediario que permite comprar y vender valores, como acciones.'],
 ];
 
 const conversacion = document.querySelector('#conversacion');
@@ -88,9 +63,7 @@ function ocultarAyuda() {
 }
 
 function seleccionar(paso, valor) {
-  if (respuestas[paso] !== valor && paso !== 'aclaracion') {
-    delete respuestas.aclaracion;
-  }
+  if (paso === 'p9' && respuestas.p9 !== valor) delete respuestas.aclaracion;
   respuestas[paso] = valor;
   editando = null;
   explicar = false;
@@ -110,36 +83,91 @@ function mostrarMotivos() {
   renderizar(true);
 }
 
+function textoRespuesta(paso) {
+  return catalogo[paso].opciones[respuestas[paso]];
+}
+
+function razonPrincipal(resultado) {
+  if (resultado.perfil === resultado.limite.nivel) {
+    if (resultado.perfil === 'propenso') {
+      return 'Tu objetivo y tu plazo admiten un nivel alto, y tus respuestas sobre pérdidas apuntan a ese mismo nivel.';
+    }
+    return limites[resultado.limite.razones[0]];
+  }
+  return `El resultado se basa en tu tolerancia ${tolerancias[resultado.tolerancia.nivel]} a pérdidas. El chat la calcula con tu reacción, la caída que te haría actuar y tu preferencia de riesgo.`;
+}
+
+function describirSenales(tolerancia) {
+  const lista = elemento('ul');
+  for (const [id, nivel] of Object.entries(tolerancia.senales)) {
+    const respuesta = id === 'p9' && respuestas.aclaracion ? textoRespuesta('aclaracion') : textoRespuesta(id);
+    const lectura = nivel ? `Tolerancia ${tolerancias[nivel]}.` : 'Quedó sin precisar una caída.';
+    const fila = elemento('li');
+    fila.append(elemento('strong', '', preguntas[id].tema + '. '));
+    fila.append(`«${respuesta}». ${lectura}`);
+    lista.append(fila);
+  }
+  return lista;
+}
+
+function describirExperiencia() {
+  const experiencia = respuestas.p3 === 'A'
+    ? 'Indicaste que ya has invertido.'
+    : 'Indicaste que estás explorando tu primera inversión.';
+  const mercados = {
+    A: 'Conoces el mercado mexicano.',
+    B: 'Conoces mercados de otros países.',
+    AyB: 'Conoces el mercado mexicano y otros mercados.',
+    C: 'Todavía estás conociendo los mercados de inversión.',
+  };
+  const analisis = respuestas.p6 === 'A'
+    ? 'Usas tus propios métodos de análisis.'
+    : 'Todavía puedes preguntar al chat cómo se evalúa el riesgo.';
+  return `${experiencia} ${mercados[respuestas.p5]} ${analisis} Para decidir, elegiste «${textoRespuesta('p7')}».`;
+}
+
 function renderizarResultado(resultado) {
-  const perfil = perfiles[resultado.perfil];
   const tarjeta = elemento('article', `resultado resultado--${resultado.perfil}`);
   tarjeta.id = 'resultado';
-  tarjeta.append(elemento('p', 'etiqueta', 'Tu perfil'));
-
-  const titulo = elemento('h3', '', perfil.nombre);
+  const titulo = elemento('h3', '', perfiles[resultado.perfil]);
   titulo.tabIndex = -1;
-  tarjeta.append(titulo, elemento('p', 'resultado-texto', perfil.descripcion));
+  tarjeta.append(elemento('p', 'etiqueta', 'Tu perfil'), titulo);
+  let destino = titulo;
 
   if (explicar) {
     const detalle = elemento('div', 'motivos');
     detalle.id = 'motivos';
     const encabezado = elemento('h4', '', 'Por qué te salió este perfil');
     encabezado.tabIndex = -1;
-    const lista = elemento('ul');
-    for (const motivo of resultado.motivos) {
-      lista.append(elemento('li', '', motivos[motivo]));
-    }
-    detalle.append(encabezado, lista);
+    const { limite, tolerancia } = resultado;
+
+    const lectura = tolerancia.nivel
+      ? `Al tomar el nivel central de las señales, la tolerancia resulta ${tolerancias[tolerancia.nivel]}. El perfil toma el nivel más bajo entre la tolerancia y el límite que fijan tu objetivo y tu plazo.`
+      : 'El objetivo y el plazo fijan el perfil en los tres escenarios de caída. Por eso puedes obtener tu resultado sin precisar un porcentaje.';
+    detalle.append(
+      encabezado,
+      elemento('h5', '', 'Objetivo y plazo'),
+      elemento('p', '', limite.razones.map((razon) => limites[razon]).join(' ')),
+      elemento('h5', '', 'Tolerancia a pérdidas'),
+      describirSenales(tolerancia),
+      elemento('p', '', lectura),
+      elemento('h5', '', 'Tu experiencia'),
+      elemento('p', '', describirExperiencia()),
+    );
     tarjeta.append(detalle);
+    destino = encabezado;
   } else {
-    tarjeta.append(boton('¿Por qué me salió este perfil?', 'boton-explicar', mostrarMotivos));
+    tarjeta.append(
+      elemento('p', 'resultado-texto', razonPrincipal(resultado)),
+      boton('¿Por qué me salió este perfil?', 'boton-explicar', mostrarMotivos),
+    );
   }
   conversacion.append(tarjeta);
-  return tarjeta.querySelector(explicar ? 'h4' : 'h3');
+  return destino;
 }
 
 function renderizarPregunta(paso) {
-  const pregunta = preguntas[paso];
+  const pregunta = catalogo[paso];
   const caja = elemento('div', 'turno');
   const titulo = elemento('h3', 'pregunta', pregunta.texto);
   titulo.id = 'pregunta';
@@ -147,43 +175,69 @@ function renderizarPregunta(paso) {
   const opciones = elemento('div', 'opciones');
   opciones.setAttribute('role', 'group');
   opciones.setAttribute('aria-labelledby', 'pregunta');
-  for (const [valor, texto] of pregunta.opciones) {
-    opciones.append(boton(texto, 'opcion', () => seleccionar(paso, valor)));
+  for (const [valor, texto] of Object.entries(pregunta.opciones)) {
+    const control = boton(texto, 'opcion', () => seleccionar(paso, valor));
+    if (editando) control.setAttribute('aria-pressed', String(respuestas[paso] === valor));
+    opciones.append(control);
   }
   caja.append(titulo, opciones);
   conversacion.append(caja);
+
+  const indice = orden.indexOf(paso);
   if (editando) {
     caja.append(boton('Volver', 'boton-texto volver', () => {
       editando = null;
+      ocultarAyuda();
       renderizar(true);
     }));
+  } else if (indice > 0) {
+    caja.append(boton('Anterior', 'boton-texto volver', () => editar(orden[indice - 1])));
   }
   return titulo;
+}
+
+function renderizarRespuestas() {
+  const respondidas = orden.filter((id) => respuestas[id]);
+  if (!respondidas.length) return;
+
+  const detalle = elemento('details', 'respuestas');
+  detalle.id = 'respuestas';
+  detalle.append(elemento('summary', '', `Revisar respuestas (${respondidas.length} de ${orden.length})`));
+  const lista = elemento('ul');
+  for (const id of respondidas) {
+    const tema = preguntas[id].tema;
+    const valor = id === 'p9' && respuestas.aclaracion
+      ? `${textoRespuesta(id)}. En la aclaración elegiste «${textoRespuesta('aclaracion')}».`
+      : textoRespuesta(id);
+    const fila = elemento('li', 'respuesta');
+    const texto = elemento('div', 'respuesta-texto');
+    texto.append(elemento('strong', '', tema), elemento('span', '', valor));
+    const control = boton('Cambiar', 'boton-texto', () => editar(id));
+    control.setAttribute('aria-label', `Cambiar ${tema}`);
+    fila.append(texto, control);
+    if (id === 'p9' && respuestas.aclaracion) {
+      fila.append(boton('Cambiar aclaración', 'boton-texto', () => editar('aclaracion')));
+    }
+    lista.append(fila);
+  }
+  detalle.append(lista);
+  conversacion.append(detalle);
 }
 
 function renderizar(enfocar = false) {
   const resultado = evaluarPerfil(respuestas);
   const paso = editando ?? resultado.paso;
-  progreso.textContent = {
-    plazo: 'Pregunta 1 de 2',
-    caida: 'Pregunta 2 de 2',
-    aclaracion: 'Una aclaración',
-    resultado: 'Resultado',
-  }[paso];
-  reiniciar.hidden = !respuestas.plazo;
-  conversacion.replaceChildren();
-
-  const elegidas = elemento('div', 'respuestas');
-  for (const [clave, texto] of [['plazo', 'Cambiar plazo'], ['caida', 'Cambiar caída'], ['aclaracion', 'Cambiar aclaración']]) {
-    if (!respuestas[clave] || clave === editando) continue;
-    const [, valor] = preguntas[clave].opciones.find(([id]) => id === respuestas[clave]);
-    const fila = elemento('div', 'respuesta');
-    fila.append(elemento('span', '', valor), boton(texto, 'boton-texto', () => editar(clave)));
-    elegidas.append(fila);
+  if (paso === 'resultado') {
+    progreso.textContent = 'Resultado';
+  } else if (paso === 'aclaracion') {
+    progreso.textContent = 'Una aclaración';
+  } else {
+    progreso.textContent = `Pregunta ${orden.indexOf(paso) + 1} de ${orden.length}`;
   }
-  if (elegidas.childElementCount) conversacion.append(elegidas);
-
+  reiniciar.hidden = !respuestas.p1;
+  conversacion.replaceChildren();
   const destino = paso === 'resultado' ? renderizarResultado(resultado) : renderizarPregunta(paso);
+  renderizarRespuestas();
   if (enfocar) {
     destino.focus({ preventScroll: true });
     destino.scrollIntoView({ block: 'center', inline: 'nearest' });
@@ -214,7 +268,7 @@ formulario.addEventListener('submit', (evento) => {
   ayuda.hidden = false;
   ayuda.textContent = pideResultado
     ? 'Termina las preguntas del perfil y te explico qué respuestas llevaron al resultado.'
-    : coincidencia?.[1] ?? 'Puedo explicar plazo, liquidez, pérdidas y riesgo. Elige una opción para seguir con tu perfil.';
+    : coincidencia?.[1] ?? 'Puedo explicar términos como plazo, liquidez, pérdidas y riesgo. Usa los botones para seguir con tu perfil.';
   ayuda.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 });
 
