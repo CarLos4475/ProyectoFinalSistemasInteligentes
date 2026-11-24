@@ -14,8 +14,8 @@ export const preguntas = {
     texto: '¿En qué rango de edad estás?',
     opciones: {
       A: 'Menos de 25 años',
-      B: 'De 25 a 39 años',
-      C: 'De 40 a 60 años',
+      B: 'De 25 a 40 años',
+      C: 'De 41 a 60 años',
       D: 'Más de 60 años',
     },
   },
