@@ -25,6 +25,9 @@ export function evaluarPerfil({ plazo, caida, aclaracion }) {
   return {
     paso: 'resultado',
     perfil: 'moderado',
-    motivos: plazo === 'medio' ? ['plazo-medio'] : ['plazo-largo', 'caida-10'],
+    motivos: [
+      plazo === 'medio' ? 'plazo-medio' : 'plazo-largo',
+      umbral === 'sin-umbral' ? 'sin-umbral' : `caida-${umbral}`,
+    ],
   };
 }

@@ -56,4 +56,13 @@ test('un plazo corto explica la decisión aunque la tolerancia sea alta', () => 
 test('una aclaración anterior no se aplica al cambiar el plazo', () => {
   const resultado = evaluarPerfil({ plazo: 'medio', caida: 'sin-umbral', aclaracion: '5' });
   assert.equal(resultado.perfil, 'moderado');
+  assert.ok(resultado.motivos.includes('sin-umbral'));
+});
+
+test('la explicación del plazo medio identifica la caída elegida', () => {
+  for (const caida of ['10', '20']) {
+    const resultado = evaluarPerfil({ plazo: 'medio', caida });
+    assert.equal(resultado.perfil, 'moderado');
+    assert.ok(resultado.motivos.includes(`caida-${caida}`));
+  }
 });
