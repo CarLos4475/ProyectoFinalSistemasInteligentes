@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explora tu perfil de riesgo y entiende qué respuestas explican tu resultado.">
+  <meta name="theme-color" content="#112d28">
+  <title>Perfil de inversión</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./chat.mjs"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="contenedor cabecera">
+      <div class="marca">
+        <span class="marca-icono" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>Perfil de inversión</span>
+      </div>
+      <span class="contexto">Proyecto académico</span>
+    </div>
+  </header>
+
+  <main class="contenedor principal">
+    <section class="introduccion" aria-labelledby="titulo">
+      <div class="intro-texto">
+        <p class="etiqueta">Sistema experto</p>
+        <h1 id="titulo">Entiende tu perfil de riesgo.</h1>
+        <p class="bajada">Responde cuándo necesitarás el dinero y qué caída te haría actuar. El chat te explica cómo influyen tus respuestas en el resultado.</p>
+      </div>
+      <ul class="factores" aria-label="Factores de tu perfil">
+        <li><strong>Plazo</strong><span>Cuándo necesitarás el dinero.</span></li>
+        <li><strong>Tolerancia a pérdidas</strong><span>Cuánta caída aceptarías antes de actuar.</span></li>
+      </ul>
+      <p class="alcance">El resultado es orientativo. Tus respuestas se quedan en esta pestaña.</p>
+    </section>
+
+    <section class="chat" aria-labelledby="titulo-chat">
+      <header class="chat-cabecera">
+        <div class="asistente" aria-hidden="true"><span></span></div>
+        <div class="chat-identidad">
+          <h2 id="titulo-chat">Chat de perfil</h2>
+          <p id="progreso">Pregunta 1 de 2</p>
+        </div>
+        <button type="button" class="boton-texto" id="reiniciar" hidden>Reiniciar</button>
+      </header>
+      <div class="chat-cuerpo">
+        <div id="conversacion"></div>
+        <div id="ayuda-respuesta" class="ayuda" role="status" hidden></div>
+      </div>
+      <footer class="chat-pie">
+        <form id="consulta" autocomplete="off">
+          <label class="solo-lectores" for="duda">Pregunta al chat</label>
+          <input id="duda" name="duda" type="text" maxlength="160" placeholder="¿Qué es la liquidez?" required>
+          <button type="submit" class="boton-oscuro">Enviar</button>
+        </form>
+      </footer>
+      <noscript><p class="sin-script">Activa JavaScript para usar el cuestionario.</p></noscript>
+    </section>
+  </main>
+</body>
+</html>
