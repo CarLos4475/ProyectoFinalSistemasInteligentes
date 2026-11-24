@@ -45,8 +45,9 @@ const motivos = {
   'caida-5': 'Considerarías tomar medidas al caer 5 %. Esa respuesta indica que una caída pequeña ya influiría en tu decisión.',
   'plazo-medio': 'Necesitarías el dinero en un plazo de uno a tres años. El cuestionario toma ese plazo como un punto intermedio.',
   'plazo-largo': 'Necesitarías el dinero en más de tres años. Ese plazo da más tiempo para esperar si la inversión pierde valor.',
-  'caida-10': 'Considerarías tomar medidas al caer 10 %. Ese límite lleva a un perfil moderado aunque tu plazo sea largo.',
-  'caida-20': 'Considerarías tomar medidas al caer 20 %. Junto con el plazo largo, esa respuesta determina el perfil propenso al riesgo.',
+  'caida-10': 'Considerarías tomar medidas al caer 10 %. Ese límite cuenta como una tolerancia intermedia en el cuestionario.',
+  'caida-20': 'Considerarías tomar medidas al caer 20 %. El cuestionario toma esa respuesta como una tolerancia más alta.',
+  'sin-umbral': 'Dijiste que una caída no te inquieta. Con un plazo de uno a tres años, el cuestionario te ubica en el perfil moderado.',
 };
 
 const glosario = [
@@ -185,7 +186,7 @@ function renderizar(enfocar = false) {
   const destino = paso === 'resultado' ? renderizarResultado(resultado) : renderizarPregunta(paso);
   if (enfocar) {
     destino.focus({ preventScroll: true });
-    conversacion.parentElement.scrollTop = conversacion.parentElement.scrollHeight;
+    destino.scrollIntoView({ block: 'center', inline: 'nearest' });
   }
 }
 
@@ -214,7 +215,7 @@ formulario.addEventListener('submit', (evento) => {
   ayuda.textContent = pideResultado
     ? 'Termina las preguntas del perfil y te explico qué respuestas llevaron al resultado.'
     : coincidencia?.[1] ?? 'Puedo explicar plazo, liquidez, pérdidas y riesgo. Elige una opción para seguir con tu perfil.';
-  conversacion.parentElement.scrollTop = conversacion.parentElement.scrollHeight;
+  ayuda.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 });
 
 renderizar();
