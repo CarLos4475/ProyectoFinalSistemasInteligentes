@@ -29,6 +29,12 @@ Los cortes son criterios de este prototipo académico. Las 350 respuestas son si
 
 La página funciona en el navegador con HTML, CSS y JavaScript. El chatbot utiliza las preguntas, las definiciones y la explicación del motor. El resultado orienta sobre el perfil de riesgo. La demo para el pitch sigue a una sola persona desde su primera respuesta hasta «¿Por qué me salió este perfil?».
 
+## Textos y documentación
+
+Se aplica `humanizer-es` a los textos en español de la página, el chatbot, los documentos y el guion del pitch. El chat usa frases que una persona pueda leer de corrido y términos que el equipo pueda explicar en voz alta.
+
+Los PDF de negocio y técnico siguen el formato de `DOCUMENTACION_NEGOCIO.pdf` y `DOCUMENTACION_TECNICA.pdf` del proyecto de IA. Se toma como referencia la portada institucional, la tipografía, los colores, la jerarquía de títulos, las tablas y los pies de página. El documento de negocio explica el problema, para quién es la página y qué hace el producto. El técnico explica la base de conocimientos, las reglas, el recorrido del chatbot y las pruebas con las respuestas simuladas.
+
 ## Pruebas de aceptación
 
 - Probar las 12 combinaciones y las tres respuestas de la pregunta de seguimiento.
