@@ -14,7 +14,7 @@ body { margin: 0; }
 
 button, input { font: inherit; }
 button { cursor: pointer; }
-button:focus-visible, input:focus-visible {
+button:focus-visible, input:focus-visible, summary:focus-visible {
   outline: 3px solid var(--enfoque);
   outline-offset: 3px;
 }
@@ -172,22 +172,42 @@ h1 {
 }
 
 .opcion:hover { background: #dcecdf; border-color: #6f9b7f; }
+.opcion[aria-pressed="true"] { border-color: #6f9b7f; background: #dcecdf; }
+.respuestas {
+  margin-top: 16px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: #fcfefa;
+}
+.respuestas summary {
+  min-height: 44px;
+  padding: 11px 14px;
+  color: #2f614d;
+  font-weight: 650;
+  cursor: pointer;
+}
+.respuestas ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 12px 12px;
+}
 .respuesta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px 12px;
   flex-wrap: wrap;
-  margin: 0 0 8px auto;
-  width: fit-content;
-  max-width: 100%;
-  padding: 4px 10px 4px 14px;
-  border-radius: 13px 4px 13px 13px;
+  margin-bottom: 6px;
+  padding: 7px 10px;
+  border-radius: 8px;
   background: #e8efe7;
   font-size: .9375rem;
 }
 
-.respuestas { margin-bottom: 20px; }
+.respuesta:last-child { margin-bottom: 0; }
+.respuesta-texto { flex: 1 1 190px; }
+.respuesta-texto strong, .respuesta-texto span { display: block; }
+.respuesta-texto span { margin-top: 2px; }
 .boton-texto {
   padding: 5px 8px;
   min-height: 34px;
@@ -215,6 +235,9 @@ h1 {
 .resultado-texto { margin: 0; line-height: 1.48; }
 .motivos { margin-top: 16px; padding-top: 15px; border-top: 1px solid #b7cbbd; }
 .motivos h4 { margin: 0; }
+.motivos h5 { margin: 15px 0 4px; font-size: .95rem; }
+.motivos p { margin: 0; line-height: 1.46; }
+.motivos ul + p { margin-top: 8px; }
 .motivos ul { margin: 8px 0 0; padding-left: 19px; line-height: 1.46; }
 .motivos li + li { margin-top: 7px; }
 .boton-explicar {
