@@ -110,6 +110,24 @@ function describirSenales(tolerancia) {
   return lista;
 }
 
+function explicarTolerancia(tolerancia) {
+  if (!tolerancia.nivel) {
+    return 'El objetivo y el plazo llevan al mismo perfil con cualquiera de las tres caídas. Por eso puedes obtener tu resultado sin precisar un porcentaje.';
+  }
+
+  const nivel = tolerancias[tolerancia.nivel];
+  const senales = new Set(Object.values(tolerancia.senales));
+  let razon = `Tus respuestas coinciden en una tolerancia ${nivel}.`;
+  if (tolerancia.senales.p9 === null) {
+    razon = `Tu reacción ante pérdidas y tu preferencia de riesgo coinciden en una tolerancia ${nivel}. Esas dos respuestas bastan para calcularla.`;
+  } else if (senales.size === 3) {
+    razon = 'Tus respuestas apuntan a tres niveles distintos. Tomamos el nivel central, que corresponde a una tolerancia intermedia.';
+  } else if (senales.size === 2) {
+    razon = `Dos respuestas apuntan a una tolerancia ${nivel}. Por eso ese es el nivel central.`;
+  }
+  return `${razon} El perfil toma el nivel más bajo entre tu tolerancia y el límite que fijan tu objetivo y tu plazo.`;
+}
+
 function describirExperiencia() {
   const experiencia = respuestas.p3 === 'A'
     ? 'Indicaste que ya has invertido.'
@@ -122,7 +140,7 @@ function describirExperiencia() {
   };
   const analisis = respuestas.p6 === 'A'
     ? 'Usas tus propios métodos de análisis.'
-    : 'Todavía puedes preguntar al chat cómo se evalúa el riesgo.';
+    : 'Dijiste que no usas métodos propios para evaluar inversiones.';
   return `${experiencia} ${mercados[respuestas.p5]} ${analisis} Para decidir, elegiste «${textoRespuesta('p7')}».`;
 }
 
@@ -141,16 +159,13 @@ function renderizarResultado(resultado) {
     encabezado.tabIndex = -1;
     const { limite, tolerancia } = resultado;
 
-    const lectura = tolerancia.nivel
-      ? `Al tomar el nivel central de las señales, la tolerancia resulta ${tolerancias[tolerancia.nivel]}. El perfil toma el nivel más bajo entre la tolerancia y el límite que fijan tu objetivo y tu plazo.`
-      : 'El objetivo y el plazo fijan el perfil en los tres escenarios de caída. Por eso puedes obtener tu resultado sin precisar un porcentaje.';
     detalle.append(
       encabezado,
       elemento('h5', '', 'Objetivo y plazo'),
       elemento('p', '', limite.razones.map((razon) => limites[razon]).join(' ')),
       elemento('h5', '', 'Tolerancia a pérdidas'),
       describirSenales(tolerancia),
-      elemento('p', '', lectura),
+      elemento('p', '', explicarTolerancia(tolerancia)),
       elemento('h5', '', 'Tu experiencia'),
       elemento('p', '', describirExperiencia()),
     );
