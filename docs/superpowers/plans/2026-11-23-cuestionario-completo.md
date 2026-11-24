@@ -21,4 +21,4 @@
 - [x] Recorrer las 14 preguntas en orden. Permitir volver atrás, cancelar una edición y consultar definiciones durante el cuestionario.
 - [x] Mostrar la razón principal, el detalle del cálculo y la experiencia declarada. Añadir el resumen plegable para editar las 14 respuestas.
 - [x] Probar el recorrido, la aclaración, la edición y el reinicio en Chromium en escritorio y móvil.
-- [ ] Actualizar el README y publicar en el repositorio y en GitHub Pages. Comprobar el enlace público.
+- [x] Actualizar el README y publicar en el repositorio y en GitHub Pages. Comprobar el enlace público.
