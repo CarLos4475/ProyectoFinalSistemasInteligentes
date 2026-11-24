@@ -1,5 +1,5 @@
 import { aclaracionCaida, preguntas } from './cuestionario.mjs';
-import { evaluarPerfil } from './perfil.mjs';
+import { evaluarPerfil } from './perfil.mjs?v=2';
 
 const orden = Object.keys(preguntas);
 const catalogo = { ...preguntas, aclaracion: aclaracionCaida };
