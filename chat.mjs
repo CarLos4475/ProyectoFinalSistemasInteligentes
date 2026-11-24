@@ -28,7 +28,7 @@ const glosario = [
   [/\b(riesgo|volatilidad|fluctuaciones?)\b/, 'El riesgo incluye la posibilidad de que tu inversión pierda valor. La volatilidad describe cuánto cambia ese valor con el tiempo.'],
   [/\b(rendimiento|rendimientos)\b/, 'El rendimiento es cuánto gana o pierde una inversión respecto a su valor inicial.'],
   [/\b(especulacion|especulativo|especular)\b/, 'Especular es buscar ganancias a partir de cambios de precio. Si el precio se mueve en la otra dirección, también puedes perder.'],
-  [/\b(sofisticado|sofisticada)\b/, 'En esta pregunta registramos cómo describes tu experiencia. El sistema usa tu objetivo, tu plazo y tus respuestas sobre pérdidas para determinar el nivel de riesgo.'],
+  [/\b(sofisticado|sofisticada)\b/, 'Para esta pregunta, piensa si tienes experiencia para entender inversiones complejas, cómo funcionan y qué podrías perder. Tu respuesta describe cómo ves tu experiencia.'],
   [/\bcasa de bolsa\b/, 'Una casa de bolsa es un intermediario que permite comprar y vender valores, como acciones.'],
 ];
 
