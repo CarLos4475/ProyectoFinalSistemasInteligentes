@@ -22,9 +22,14 @@ Las 350 respuestas del Excel son simuladas y sirven para probar las reglas. La [
 
 El resultado es orientativo y forma parte de un proyecto académico.
 
-## Activar DeepSeek en Vercel
+## Publicar en Vercel
 
-Importa este repositorio como proyecto en Vercel. La configuración publica `web/` y expone `/api/interpretar`. Guarda una clave de DeepSeek en la variable de servidor `DEEPSEEK_API_KEY` y vuelve a desplegar. En la página de ese despliegue aparece la opción de usar DeepSeek.
+1. En [Vercel](https://vercel.com/new), importa `CarLos4475/ProyectoFinalSistemasInteligentes` desde GitHub.
+2. Elige **Other** como **Framework Preset** y deja **Root Directory** en la raíz del repo (`./`). El archivo `vercel.json` publica la carpeta `web/` sin compilar y Vercel carga la función en `/api/interpretar`.
+3. Si quieres habilitar DeepSeek, agrega una clave nueva como `DEEPSEEK_API_KEY` en **Environment Variables** para **Production**. Si la agregas después del primer despliegue, haz **Redeploy** para que surta efecto.
+4. Pulsa **Deploy** y abre el enlace que genera Vercel. Visita también `/api/interpretar` en ese dominio para comprobar que devuelve `{"disponible":true}` con la variable configurada.
+
+Sin la clave, el simulador, el cuestionario y el chat local siguen disponibles.
 
 Al activar esa opción, la función envía a DeepSeek únicamente el texto de la pregunta. El proveedor puede indicar una caída del 0 al 100 % o pedir que se muestre la explicación del perfil. El código del navegador ejecuta ambas acciones. La versión de GitHub Pages usa la interpretación local.
 
