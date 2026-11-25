@@ -5,10 +5,10 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Explora tu perfil de riesgo y entiende qué respuestas explican tu resultado.">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#151517">
   <title>Perfil de inversión</title>
   <link rel="icon" href="./assets/marca.webp" type="image/webp">
-  <link rel="stylesheet" href="./styles.css?v=3">
+  <link rel="stylesheet" href="./styles.css?v=4">
   <script type="module" src="./chat.mjs?v=2"></script>
 </head>
 <body>
@@ -22,38 +22,46 @@
     </div>
   </header>
 
-  <main class="contenedor principal">
+  <main>
     <section class="introduccion" aria-labelledby="titulo">
-      <div class="intro-texto">
-        <p class="etiqueta">Sistema experto</p>
-        <h1 id="titulo">Entiende tu perfil de riesgo.</h1>
-        <p class="bajada">El chat te hace 14 preguntas sobre tu objetivo, tu experiencia y cómo reaccionarías ante una pérdida. Al final te explica qué respuestas determinaron tu perfil.</p>
+      <div class="contenedor portada">
+        <div class="intro-texto">
+          <p class="etiqueta">Sistema experto</p>
+          <h1 id="titulo">Entiende tu perfil de riesgo.</h1>
+          <p class="bajada">Descubre cómo tu objetivo, tu plazo y tu tolerancia a pérdidas influyen en tu perfil de inversión.</p>
+          <a class="accion" href="#cuestionario">Ir al cuestionario</a>
+        </div>
+        <img class="portada-imagen" src="./assets/brujula.webp" width="1080" height="720" alt="" fetchpriority="high">
       </div>
-      <p class="alcance">El resultado es orientativo. Tus respuestas se quedan en esta pestaña.</p>
     </section>
 
-    <section class="chat" aria-labelledby="titulo-chat">
-      <header class="chat-cabecera">
-        <img class="asistente" src="./assets/asistente.webp" width="42" height="42" alt="">
-        <div class="chat-identidad">
-          <h2 id="titulo-chat">Chat de perfil</h2>
-          <p id="progreso">Pregunta 1 de 14</p>
+    <div class="zona-chat">
+      <section class="chat contenedor" id="cuestionario" aria-labelledby="titulo-chat" tabindex="-1">
+        <header class="chat-cabecera">
+          <img class="asistente" src="./assets/asistente.webp" width="42" height="42" alt="">
+          <div class="chat-identidad">
+            <h2 id="titulo-chat">Chat de perfil</h2>
+            <p id="progreso">Pregunta 1 de 14</p>
+          </div>
+          <button type="button" class="boton-texto" id="reiniciar" hidden>Reiniciar</button>
+        </header>
+        <div class="chat-cuerpo">
+          <div id="conversacion"></div>
+          <div id="ayuda-respuesta" class="ayuda" role="status" hidden></div>
         </div>
-        <button type="button" class="boton-texto" id="reiniciar" hidden>Reiniciar</button>
-      </header>
-      <div class="chat-cuerpo">
-        <div id="conversacion"></div>
-        <div id="ayuda-respuesta" class="ayuda" role="status" hidden></div>
-      </div>
-      <footer class="chat-pie">
-        <form id="consulta" autocomplete="off">
-          <label class="solo-lectores" for="duda">Pregunta al chat</label>
-          <input id="duda" name="duda" type="text" maxlength="160" placeholder="¿Qué es la liquidez?" required>
-          <button type="submit" class="boton-oscuro">Enviar</button>
-        </form>
-      </footer>
-      <noscript><p class="sin-script">Activa JavaScript para usar el cuestionario.</p></noscript>
-    </section>
+        <footer class="chat-pie">
+          <form id="consulta" autocomplete="off">
+            <label class="solo-lectores" for="duda">Pregunta al chat</label>
+            <input id="duda" name="duda" type="text" maxlength="160" placeholder="¿Qué es la liquidez?" required>
+            <button type="submit" class="boton-oscuro">Enviar</button>
+          </form>
+        </footer>
+        <noscript><p class="sin-script">Activa JavaScript para usar el cuestionario.</p></noscript>
+      </section>
+    </div>
   </main>
+  <footer class="pie">
+    <p class="contenedor alcance">El resultado es orientativo. Tus respuestas se quedan en esta pestaña.</p>
+  </footer>
 </body>
 </html>
