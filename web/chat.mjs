@@ -1,5 +1,5 @@
 import { aclaracionCaida, preguntas } from './cuestionario.mjs?v=7';
-import { disponibleDeepSeek, interpretarDeepSeek } from './interprete.mjs?v=8';
+import { disponibleDeepSeek, interpretarDeepSeek } from './interprete.mjs?v=9';
 import { evaluarPerfil } from './perfil.mjs?v=2';
 import { ajustarCaida, describirCaida, iniciarSimulador, leerEscenario } from './simulador.mjs?v=6';
 
@@ -347,7 +347,7 @@ formulario.addEventListener('submit', async (evento) => {
     enviar.disabled = true;
     const revision = revisionChat;
     mostrarAyuda('DeepSeek está respondiendo…');
-    const respuesta = await interpretarDeepSeek(pregunta, paso);
+    const respuesta = await interpretarDeepSeek(pregunta, paso, respuestas);
     enviar.disabled = false;
     if (revisionChat !== revision) return;
     if (respuesta?.accion === 'responder' && typeof respuesta.texto === 'string') {

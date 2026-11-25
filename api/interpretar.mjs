@@ -36,6 +36,8 @@ const sistema = 'Eres el asistente de un simulador académico de caídas y un cu
   + 'Si la persona dice que no entiende, explica en palabras sencillas la pregunta que ve. '
   + 'Si pregunta por una opción concreta, explica esa opción y usa el orden en que aparecen. '
   + 'Si describe una situación y pregunta qué opción encaja, relaciónala con las opciones visibles. '
+  + 'Usa las respuestas registradas cuando ayuden a contestar la duda. Distingue lo que la persona ya marcó de las opciones que todavía puede elegir. '
+  + 'Si te pregunta por una respuesta que no tienes registrada, dilo. No deduzcas su perfil a partir de un cuestionario incompleto. '
   + 'Puedes explicar conceptos del cuestionario y del simulador. Mantén el enfoque educativo y evita recomendar inversiones concretas o prometer rendimientos. '
   + 'Elige una sola función cuando corresponda. Usa simular_caida solo si se pide '
   + 'probar una caída y se indica un único porcentaje entero entre 0 y 100, en dígitos o escrito con palabras. '
@@ -49,6 +51,22 @@ function contextoDelPaso(paso) {
   if (!activa) return '';
   const opciones = Object.values(activa.opciones).map((opcion, i) => `${i + 1}. ${opcion}`);
   return `\nPregunta que ve la persona: ${activa.texto}\nOpciones en pantalla:\n${opciones.join('\n')}\nGuía del cuestionario: ${activa.ayuda}`;
+}
+
+function contextoDeRespuestas(respuestas) {
+  const elegidas = Object.entries(catalogo)
+    .filter(([paso]) => Object.hasOwn(respuestas, paso))
+    .map(([paso, pregunta]) => `- ${pregunta.tema}: ${pregunta.opciones[respuestas[paso]]}`);
+  return elegidas.length
+    ? `\nRespuestas registradas hasta ahora:\n${elegidas.join('\n')}`
+    : '\nTodavía no hay respuestas registradas en el contexto.';
+}
+
+function respuestasValidas(respuestas) {
+  if (!respuestas || typeof respuestas !== 'object' || Array.isArray(respuestas)) return false;
+  return Object.entries(respuestas).every(([paso, opcion]) => Object.hasOwn(catalogo, paso)
+    && typeof opcion === 'string' && Object.hasOwn(catalogo[paso].opciones, opcion))
+    && (!Object.hasOwn(respuestas, 'aclaracion') || respuestas.p9 === 'D');
 }
 
 function json(data, status = 200) {
@@ -78,13 +96,15 @@ async function leerPregunta(request) {
     }
     const datos = JSON.parse(texto + decodificador.decode());
     if (datos && typeof datos === 'object' && !Array.isArray(datos)
-        && Object.keys(datos).every((clave) => clave === 'pregunta' || clave === 'paso')
+        && Object.keys(datos).every((clave) => ['pregunta', 'paso', 'respuestas'].includes(clave))
         && typeof datos.pregunta === 'string') {
-      const { paso } = datos;
+      const { paso, respuestas = {} } = datos;
       const pregunta = datos.pregunta.trim();
       const pasoValido = paso === undefined || paso === 'resultado'
         || (typeof paso === 'string' && Object.hasOwn(catalogo, paso));
-      if (pregunta && pregunta.length <= maxPregunta && pasoValido) return { pregunta, paso };
+      if (pregunta && pregunta.length <= maxPregunta && pasoValido && respuestasValidas(respuestas)) {
+        return { pregunta, paso, respuestas };
+      }
     }
     return { status: 400 };
   } catch {
@@ -140,7 +160,7 @@ export function crearInterpretador({ clave, enviar = fetch, ahora = Date.now } =
       return json({ error: 'origen_invalido' }, 403);
     }
 
-    const { pregunta, paso, status } = await leerPregunta(request);
+    const { pregunta, paso, respuestas, status } = await leerPregunta(request);
     if (!pregunta) return json({ error: 'consulta_invalida' }, status);
 
     const minuto = Math.floor(ahora() / 60_000);
@@ -159,7 +179,7 @@ export function crearInterpretador({ clave, enviar = fetch, ahora = Date.now } =
         body: JSON.stringify({
           model: 'deepseek-flash',
           messages: [
-            { role: 'system', content: sistema + contextoDelPaso(paso) },
+            { role: 'system', content: sistema + contextoDelPaso(paso) + contextoDeRespuestas(respuestas) },
             { role: 'user', content: pregunta },
           ],
           tools,
