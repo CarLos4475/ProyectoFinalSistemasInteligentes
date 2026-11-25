@@ -1,7 +1,7 @@
 import { aclaracionCaida, preguntas } from './cuestionario.mjs';
 import { disponibleDeepSeek, interpretarDeepSeek } from './interprete.mjs';
 import { evaluarPerfil } from './perfil.mjs?v=2';
-import { ajustarCaida, describirCaida, iniciarSimulador, leerEscenario } from './simulador.mjs';
+import { ajustarCaida, describirCaida, iniciarSimulador, leerEscenario } from './simulador.mjs?v=6';
 
 const orden = Object.keys(preguntas);
 const catalogo = { ...preguntas, aclaracion: aclaracionCaida };
@@ -36,6 +36,9 @@ const glosario = [
 
 const conversacion = document.querySelector('#conversacion');
 const progreso = document.querySelector('#progreso');
+const barraChat = document.querySelector('#barra-chat');
+const chat = document.querySelector('#cuestionario');
+const chatLateral = document.querySelector('#chat-lateral');
 const ayuda = document.querySelector('#ayuda-respuesta');
 const reiniciar = document.querySelector('#reiniciar');
 const formulario = document.querySelector('#consulta');
@@ -157,7 +160,7 @@ function actualizarVinculo() {
 
   const escenario = leerEscenario();
   const coincide = escenario?.plazo === respuestas.p4;
-  vinculo.hidden = !coincide;
+  vinculo.closest('.resultado-escenario').hidden = !coincide;
   vinculo.textContent = coincide ? describirCaida(escenario) : '';
 }
 
@@ -166,10 +169,22 @@ function renderizarResultado(resultado) {
   tarjeta.id = 'resultado';
   const titulo = elemento('h3', '', perfiles[resultado.perfil]);
   titulo.tabIndex = -1;
-  tarjeta.append(elemento('p', 'etiqueta', 'Tu perfil'), titulo);
+  const lateral = elemento('div', 'resultado-lateral');
+  const ficha = elemento('div', 'resultado-perfil tarjeta-clay');
+  const escala = elemento('ul', 'escala-perfil');
+  escala.setAttribute('aria-label', 'Niveles de riesgo');
+  for (const [nivel, nombre] of Object.entries(perfiles)) {
+    const item = elemento('li', '', nivel === 'propenso' ? 'Propenso' : nombre);
+    if (resultado.perfil === nivel) item.setAttribute('aria-current', 'true');
+    escala.append(item);
+  }
+  ficha.append(elemento('p', 'etiqueta', 'Tu perfil · orientativo'), titulo, escala);
+  lateral.append(ficha);
+  tarjeta.append(lateral);
   let destino = titulo;
 
   if (explicar) {
+    tarjeta.classList.add('resultado--explicado');
     const detalle = elemento('div', 'motivos');
     detalle.id = 'motivos';
     const encabezado = elemento('h4', '', 'Por qué te salió este perfil');
@@ -177,22 +192,25 @@ function renderizarResultado(resultado) {
     const { limite, tolerancia } = resultado;
     const vinculo = elemento('p');
     vinculo.id = 'vinculo-escenario';
+    const escenario = elemento('section', 'resultado-escenario');
+    escenario.append(elemento('h4', '', 'Escenario activo'), vinculo);
+    lateral.append(escenario);
 
-    detalle.append(
-      encabezado,
-      elemento('h5', '', 'Objetivo y plazo'),
-      elemento('p', '', limite.razones.map((razon) => limites[razon]).join(' ')),
-      vinculo,
-      elemento('h5', '', 'Tolerancia a pérdidas'),
-      describirSenales(tolerancia),
-      elemento('p', '', explicarTolerancia(tolerancia)),
-      elemento('h5', '', 'Tu experiencia'),
-      elemento('p', '', describirExperiencia()),
-    );
+    ficha.append(elemento('p', 'resultado-texto', 'El perfil toma el nivel más bajo entre tu tolerancia y el máximo que fijan tu objetivo y tu plazo.'));
+    detalle.append(encabezado);
+    for (const [tema, ...contenido] of [
+      ['Objetivo y plazo', elemento('p', '', limite.razones.map((razon) => limites[razon]).join(' '))],
+      ['Tolerancia a pérdidas', describirSenales(tolerancia), elemento('p', '', explicarTolerancia(tolerancia))],
+      ['Tu experiencia', elemento('p', '', describirExperiencia())],
+    ]) {
+      const tarjetaMotivo = elemento('section', 'tarjeta-motivo tarjeta-clay');
+      tarjetaMotivo.append(elemento('h5', '', tema), ...contenido);
+      detalle.append(tarjetaMotivo);
+    }
     tarjeta.append(detalle);
     destino = encabezado;
   } else {
-    tarjeta.append(
+    ficha.append(
       elemento('p', 'resultado-texto', razonPrincipal(resultado)),
       boton('¿Por qué me salió este perfil?', 'boton-explicar', mostrarMotivos),
     );
@@ -231,7 +249,7 @@ function renderizarPregunta(paso) {
   return titulo;
 }
 
-function renderizarRespuestas() {
+function renderizarRespuestas(padre) {
   const respondidas = orden.filter((id) => respuestas[id]);
   if (!respondidas.length) return;
 
@@ -256,12 +274,15 @@ function renderizarRespuestas() {
     lista.append(fila);
   }
   detalle.append(lista);
-  conversacion.append(detalle);
+  padre.append(detalle);
 }
 
 function renderizar(enfocar = false) {
   const resultado = evaluarPerfil(respuestas);
   const paso = editando ?? resultado.paso;
+  chat.classList.toggle('chat--resultado', paso === 'resultado');
+  chatLateral.hidden = paso === 'resultado';
+  barraChat.value = orden.filter((id) => respuestas[id]).length;
   if (paso === 'resultado') {
     progreso.textContent = 'Resultado';
   } else if (paso === 'aclaracion') {
@@ -272,7 +293,7 @@ function renderizar(enfocar = false) {
   reiniciar.hidden = Object.keys(respuestas).length === 0;
   conversacion.replaceChildren();
   const destino = paso === 'resultado' ? renderizarResultado(resultado) : renderizarPregunta(paso);
-  renderizarRespuestas();
+  renderizarRespuestas(conversacion.querySelector('.resultado-lateral') ?? conversacion);
   actualizarVinculo();
   if (enfocar) {
     destino.focus({ preventScroll: true });

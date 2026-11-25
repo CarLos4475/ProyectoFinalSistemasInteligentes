@@ -6,8 +6,13 @@ const montoMeta = formulario.querySelector('#monto-meta');
 const plazo = formulario.querySelector('#plazo-meta');
 const caida = formulario.querySelector('#caida');
 const indicador = formulario.querySelector('#caida-valor');
-const saldo = document.querySelector('#saldo-caida');
+const barraCaida = formulario.querySelector('#barra-caida');
 const mensaje = document.querySelector('#resultado-caida');
+const resumenes = Object.fromEntries(
+  ['pct', 'orb', 'saldo', 'meta', 'balance', 'plazo', 'panel', 'cobertura'].map((dato) =>
+    [dato, document.querySelectorAll(`[data-escenario-${dato}]`)],
+  ),
+);
 
 const moneda = new Intl.NumberFormat('es-MX', {
   style: 'currency', currency: 'MXN', minimumFractionDigits: 0, maximumFractionDigits: 2,
@@ -20,7 +25,7 @@ export function leerEscenario() {
   if (base === null || meta === null || meta <= 0) return null;
   const porcentaje = Number(caida.value);
   return {
-    porcentaje, plazo: plazo.value, ...simularCaida(base, meta, porcentaje),
+    meta, porcentaje, plazo: plazo.value, ...simularCaida(base, meta, porcentaje),
   };
 }
 
@@ -33,8 +38,30 @@ export function describirSaldo({ faltante, sobrante }) {
 function actualizar() {
   indicador.value = `${caida.value} %`;
   caida.setAttribute('aria-valuetext', `${caida.value} por ciento`);
+  barraCaida.value = Number(caida.value);
   const escenario = leerEscenario();
-  saldo.textContent = escenario ? pesos(escenario.saldo) : '—';
+  const estado = !escenario ? 'incompleto' : escenario.faltante ? 'faltante' : escenario.sobrante ? 'sobrante' : 'justo';
+  let balance = 'Completa los montos';
+  if (estado === 'faltante') balance = `Faltan ${pesos(escenario.faltante)}`;
+  if (estado === 'sobrante') balance = `Sobran ${pesos(escenario.sobrante)}`;
+  if (estado === 'justo') balance = 'Meta cubierta';
+  const textos = {
+    saldo: escenario ? pesos(escenario.saldo) : '—',
+    meta: escenario ? pesos(escenario.meta) : '—',
+    pct: indicador.value,
+    orb: caida.value === '0' ? indicador.value : `−${indicador.value}`,
+    plazo: plazo.selectedOptions[0].textContent,
+    balance,
+  };
+  for (const [dato, texto] of Object.entries(textos)) {
+    for (const nodo of resumenes[dato]) nodo.textContent = texto;
+  }
+  for (const panel of resumenes.panel) panel.dataset.balance = estado;
+  const avance = escenario ? Math.min(100, 100 * escenario.saldo / escenario.meta) : 0;
+  for (const barra of resumenes.cobertura) {
+    barra.value = avance;
+    barra.setAttribute('aria-valuetext', `${Math.round(avance)} % de la meta cubierta`);
+  }
   mensaje.textContent = escenario
     ? describirSaldo(escenario)
     : 'Ingresa ambos montos en pesos para ver el resultado.';
