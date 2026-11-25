@@ -2,14 +2,14 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Explora tu perfil de riesgo y entiende qué respuestas explican tu resultado.">
   <meta name="theme-color" content="#151517">
   <title>Perfil de inversión</title>
   <link rel="icon" href="./assets/marca.webp" type="image/webp">
-  <link rel="stylesheet" href="./styles.css?v=4">
-  <script type="module" src="./chat.mjs?v=2"></script>
+  <link rel="stylesheet" href="./styles.css?v=5">
+  <script type="module" src="./chat.mjs?v=5"></script>
 </head>
 <body>
   <header class="header">
@@ -27,13 +27,57 @@
       <div class="contenedor portada">
         <div class="intro-texto">
           <p class="etiqueta">Sistema experto</p>
-          <h1 id="titulo">Entiende tu perfil de riesgo.</h1>
-          <p class="bajada">Descubre cómo tu objetivo, tu plazo y tu tolerancia a pérdidas influyen en tu perfil de inversión.</p>
-          <a class="accion" href="#cuestionario">Ir al cuestionario</a>
+          <h1 id="titulo">¿Una caída pondría en riesgo tu meta?</h1>
+          <p class="bajada">Prueba cuánto dinero te quedaría si tu inversión pierde valor. Después, descubre cómo el plazo y tu tolerancia influyen en tu perfil de riesgo.</p>
+          <div class="acciones-portada">
+            <a class="accion" href="#simulador">Probar una caída</a>
+            <a class="enlace-portada" href="#cuestionario">Ir al cuestionario</a>
+          </div>
         </div>
         <img class="portada-imagen" src="./assets/brujula.webp" width="1080" height="720" alt="" fetchpriority="high">
       </div>
     </section>
+
+    <div class="zona-simulador">
+      <section class="simulador contenedor" id="simulador" aria-labelledby="titulo-simulador" tabindex="-1">
+        <header class="simulador-cabecera">
+          <h2 id="titulo-simulador">Prueba con tu meta</h2>
+          <p>El ejemplo parte de $10,000 disponibles y una meta de $9,000. Puedes cambiar ambos montos.</p>
+        </header>
+        <div class="simulador-cuadricula">
+          <form id="escenario" class="escenario">
+            <div class="montos">
+              <label for="disponible">Monto disponible
+                <input id="disponible" type="number" inputmode="decimal" min="0" max="100000000" step="0.01" value="10000" required>
+              </label>
+              <label for="monto-meta">Monto que necesitas
+                <input id="monto-meta" type="number" inputmode="decimal" min="0.01" max="100000000" step="0.01" value="9000" required>
+              </label>
+            </div>
+            <label for="plazo-meta">Cuándo necesitas el dinero
+              <select id="plazo-meta">
+                <option value="A">En menos de 1 año</option>
+                <option value="B">En 1 a 3 años</option>
+                <option value="C">En más de 3 años</option>
+              </select>
+            </label>
+            <div class="caida">
+              <div>
+                <label for="caida">Caída simulada</label>
+                <output id="caida-valor" for="caida">20 %</output>
+              </div>
+              <input id="caida" type="range" min="0" max="100" step="1" value="20" aria-valuetext="20 por ciento">
+            </div>
+            <button class="boton-oscuro" type="submit">Usar este plazo en el cuestionario</button>
+          </form>
+          <div class="escenario-resultado" role="status" aria-live="polite">
+            <p id="escenario-titulo">Tu saldo después de la caída</p>
+            <p id="saldo-caida" class="saldo">$8,000</p>
+            <p id="resultado-caida">Te faltarían $1,000 para alcanzar tu meta.</p>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <div class="zona-chat">
       <section class="chat contenedor" id="cuestionario" aria-labelledby="titulo-chat" tabindex="-1">
@@ -52,16 +96,20 @@
         <footer class="chat-pie">
           <form id="consulta" autocomplete="off">
             <label class="solo-lectores" for="duda">Pregunta al chat</label>
-            <input id="duda" name="duda" type="text" maxlength="160" placeholder="¿Qué es la liquidez?" required>
+            <input id="duda" name="duda" type="text" maxlength="160" placeholder="¿Y si mi inversión cae 15 %?" required>
             <button type="submit" class="boton-oscuro">Enviar</button>
           </form>
+          <div id="opcion-deepseek" class="opcion-deepseek" hidden>
+            <label><input type="checkbox" id="usar-deepseek" autocomplete="off"> Usar DeepSeek para interpretar mis preguntas</label>
+            <p>Al activarlo, el texto que envíes se comparte con DeepSeek.</p>
+          </div>
         </footer>
         <noscript><p class="sin-script">Activa JavaScript para usar el cuestionario.</p></noscript>
       </section>
     </div>
   </main>
   <footer class="pie">
-    <p class="contenedor alcance">El resultado es orientativo. Tus respuestas se quedan en esta pestaña.</p>
+    <p class="contenedor alcance">El perfil es orientativo. El simulador trabaja con caídas hipotéticas.</p>
   </footer>
 </body>
 </html>

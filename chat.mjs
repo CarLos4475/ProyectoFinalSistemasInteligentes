@@ -1,5 +1,7 @@
 import { aclaracionCaida, preguntas } from './cuestionario.mjs';
+import { disponibleDeepSeek, interpretarDeepSeek } from './interprete.mjs';
 import { evaluarPerfil } from './perfil.mjs?v=2';
+import { ajustarCaida, describirCaida, iniciarSimulador, leerEscenario } from './simulador.mjs';
 
 const orden = Object.keys(preguntas);
 const catalogo = { ...preguntas, aclaracion: aclaracionCaida };
@@ -38,10 +40,14 @@ const ayuda = document.querySelector('#ayuda-respuesta');
 const reiniciar = document.querySelector('#reiniciar');
 const formulario = document.querySelector('#consulta');
 const duda = document.querySelector('#duda');
+const enviar = formulario.querySelector('button[type="submit"]');
+const opcionDeepSeek = document.querySelector('#opcion-deepseek');
+const usarDeepSeek = opcionDeepSeek.querySelector('#usar-deepseek');
 
 const respuestas = {};
 let editando = null;
 let explicar = false;
+let revisionChat = 0;
 
 function elemento(tag, clase, texto) {
   const nodo = document.createElement(tag);
@@ -58,6 +64,7 @@ function boton(texto, clase, accion) {
 }
 
 function ocultarAyuda() {
+  revisionChat += 1;
   ayuda.hidden = true;
   ayuda.textContent = '';
 }
@@ -144,6 +151,16 @@ function describirExperiencia() {
   return `${experiencia} ${mercados[respuestas.p5]} ${analisis} Para decidir, elegiste «${textoRespuesta('p7')}».`;
 }
 
+function actualizarVinculo() {
+  const vinculo = document.querySelector('#vinculo-escenario');
+  if (!vinculo) return;
+
+  const escenario = leerEscenario();
+  const coincide = escenario?.plazo === respuestas.p4;
+  vinculo.hidden = !coincide;
+  vinculo.textContent = coincide ? describirCaida(escenario) : '';
+}
+
 function renderizarResultado(resultado) {
   const tarjeta = elemento('article', `resultado resultado--${resultado.perfil}`);
   tarjeta.id = 'resultado';
@@ -158,11 +175,14 @@ function renderizarResultado(resultado) {
     const encabezado = elemento('h4', '', 'Por qué te salió este perfil');
     encabezado.tabIndex = -1;
     const { limite, tolerancia } = resultado;
+    const vinculo = elemento('p');
+    vinculo.id = 'vinculo-escenario';
 
     detalle.append(
       encabezado,
       elemento('h5', '', 'Objetivo y plazo'),
       elemento('p', '', limite.razones.map((razon) => limites[razon]).join(' ')),
+      vinculo,
       elemento('h5', '', 'Tolerancia a pérdidas'),
       describirSenales(tolerancia),
       elemento('p', '', explicarTolerancia(tolerancia)),
@@ -249,10 +269,11 @@ function renderizar(enfocar = false) {
   } else {
     progreso.textContent = `Pregunta ${orden.indexOf(paso) + 1} de ${orden.length}`;
   }
-  reiniciar.hidden = !respuestas.p1;
+  reiniciar.hidden = Object.keys(respuestas).length === 0;
   conversacion.replaceChildren();
   const destino = paso === 'resultado' ? renderizarResultado(resultado) : renderizarPregunta(paso);
   renderizarRespuestas();
+  actualizarVinculo();
   if (enfocar) {
     destino.focus({ preventScroll: true });
     destino.scrollIntoView({ block: 'center', inline: 'nearest' });
@@ -268,23 +289,69 @@ reiniciar.addEventListener('click', () => {
   renderizar(true);
 });
 
-formulario.addEventListener('submit', (evento) => {
-  evento.preventDefault();
-  const texto = duda.value.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').trim();
-  if (!texto) return;
+function mostrarAyuda(texto) {
+  ayuda.hidden = false;
+  ayuda.textContent = texto;
+  ayuda.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
 
+function interpretarLocal(texto) {
+  if (/\b(por que|explica|explicame)\b.*\bperfil\b/.test(texto)) {
+    return { accion: 'explicar_perfil' };
+  }
+  const porcentajes = [...texto.matchAll(/([+-]?\d+(?:[.,]\d+)?)\s*(?:%|por ciento\b)/g)];
+  if (/\b(cae|caer|caida|baja|bajara|pierde|perdida|perder)\b/.test(texto) && porcentajes.length === 1) {
+    const porcentaje = Number(porcentajes[0][1].replace(',', '.'));
+    if (Number.isInteger(porcentaje) && porcentaje >= 0 && porcentaje <= 100) {
+      return { accion: 'simular_caida', porcentaje };
+    }
+  }
+  return null;
+}
+
+formulario.addEventListener('submit', async (evento) => {
+  evento.preventDefault();
+  const pregunta = duda.value.trim();
+  if (!pregunta || enviar.disabled) return;
+  const texto = pregunta.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+  let intencion = interpretarLocal(texto);
   duda.value = '';
-  const pideResultado = /\bpor que\b.*\bperfil\b/.test(texto);
-  if (pideResultado && !editando && evaluarPerfil(respuestas).paso === 'resultado') {
-    mostrarMotivos();
+
+  if (!opcionDeepSeek.hidden && usarDeepSeek.checked) {
+    enviar.disabled = true;
+    const revision = revisionChat;
+    mostrarAyuda('Interpretando tu pregunta…');
+    const respuesta = await interpretarDeepSeek(pregunta);
+    enviar.disabled = false;
+    if (revisionChat !== revision) return;
+    if (respuesta?.accion === 'explicar_perfil' || respuesta?.accion === 'simular_caida') {
+      intencion = respuesta;
+    }
+  }
+
+  if (intencion?.accion === 'explicar_perfil') {
+    if (!editando && evaluarPerfil(respuestas).paso === 'resultado') mostrarMotivos();
+    else mostrarAyuda('Termina las preguntas del perfil y te explico qué respuestas llevaron al resultado.');
     return;
   }
+  if (intencion?.accion === 'simular_caida') {
+    const escenario = ajustarCaida(intencion.porcentaje);
+    actualizarVinculo();
+    mostrarAyuda(escenario
+      ? describirCaida(escenario)
+      : 'Ingresa los dos montos en el simulador y vuelve a indicar la caída.');
+    return;
+  }
+
   const coincidencia = glosario.find(([patron]) => patron.test(texto));
-  ayuda.hidden = false;
-  ayuda.textContent = pideResultado
-    ? 'Termina las preguntas del perfil y te explico qué respuestas llevaron al resultado.'
-    : coincidencia?.[1] ?? 'Puedo explicar términos como plazo, liquidez, pérdidas y riesgo. Usa los botones para seguir con tu perfil.';
-  ayuda.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  if (coincidencia) {
+    mostrarAyuda(coincidencia[1]);
+    return;
+  }
+  mostrarAyuda('Prueba «¿Y si mi inversión cae 15 %?» o «¿Por qué me salió este perfil?». También puedo explicar términos como liquidez y plazo.');
 });
 
+usarDeepSeek.checked = false;
+disponibleDeepSeek().then((disponible) => { opcionDeepSeek.hidden = !disponible; });
+iniciarSimulador((plazo) => seleccionar('p4', plazo), actualizarVinculo);
 renderizar();
