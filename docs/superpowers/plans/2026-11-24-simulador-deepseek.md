@@ -10,4 +10,4 @@
 - [x] Añadir el simulador y reutilizar el plazo en la pregunta 4.
 - [x] Probar y crear `api/interpretar.mjs`. Aceptar únicamente preguntas de texto y devolver `simular_caida` con un porcentaje válido o `explicar_perfil`.
 - [x] Conectar las acciones al chat, verificar el modo local y documentar la configuración de Vercel.
-- [ ] Probar la navegación en escritorio y móvil y publicar la versión disponible.
+- [x] Probar la navegación en escritorio y móvil y publicar la versión disponible.
