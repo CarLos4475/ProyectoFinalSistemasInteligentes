@@ -346,7 +346,7 @@ formulario.addEventListener('submit', async (evento) => {
   if (!avisoDeepSeek.hidden) {
     enviar.disabled = true;
     const revision = revisionChat;
-    mostrarAyuda('DeepSeek está respondiendo…');
+    mostrarAyuda('DeepSeek Flash');
     const respuesta = await interpretarDeepSeek(pregunta, paso, respuestas);
     enviar.disabled = false;
     if (revisionChat !== revision) return;
