@@ -31,9 +31,9 @@ El resultado es orientativo y forma parte de un proyecto académico.
 
 Sin la clave, el simulador, el cuestionario y el chat local siguen disponibles.
 
-Al activar esa opción, la función envía a DeepSeek únicamente lo que escribes en el chat. El proveedor puede indicar una caída del 0 al 100 %, pedir que se muestre la explicación del perfil o reconocer que necesitas una aclaración. Si escribes «No entiendo», el navegador usa la pregunta que tienes en pantalla para mostrarte una explicación. Esta ayuda también funciona en GitHub Pages con la interpretación local.
+Cuando DeepSeek está disponible, recibe lo que escribes en el chat junto con la pregunta y las opciones que ves. Con eso redacta una respuesta a tu duda. Las opciones que marques y los montos del simulador se quedan en tu navegador. Si pides probar una caída o ver por qué te salió tu perfil, la página ejecuta esa acción con sus propias reglas. En GitHub Pages y cuando falla el proveedor, el chat usa sus explicaciones locales.
 
-La función limita las consultas por instancia y usa un tiempo de espera de cinco segundos. Para una demo pública con la API activa, configura un límite en el [firewall de Vercel](https://vercel.com/docs/vercel-firewall/vercel-waf/custom-rules) para `POST /api/interpretar`. El límite del firewall abarca el despliegue, incluso si se ejecutan varias instancias.
+La función limita las consultas por instancia y usa un tiempo de espera de ocho segundos. Para una demo pública con la API activa, configura un límite en el [firewall de Vercel](https://vercel.com/docs/vercel-firewall/vercel-waf/custom-rules) para `POST /api/interpretar`. El límite del firewall abarca el despliegue, incluso si se ejecutan varias instancias.
 
 ## Pruebas
 

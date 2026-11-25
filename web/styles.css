@@ -293,7 +293,7 @@ progress::-moz-progress-bar { border-radius: var(--pastilla); background: var(--
 .respuesta-texto { flex: 1 1 180px; min-width: 0; }
 .respuesta-texto strong, .respuesta-texto span { display: block; }
 .respuesta-texto span { color: var(--secundario); }
-.ayuda { margin-top: 13px; padding: 11px 16px; border-radius: 20px; background: var(--coral-claro); color: #6b2410; }
+.ayuda { margin-top: 13px; padding: 11px 16px; border-radius: 20px; background: var(--coral-claro); color: #6b2410; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .resultado { display: grid; grid-template-columns: minmax(0, 1fr); gap: 23px; }
 .resultado--explicado { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); }
@@ -319,9 +319,7 @@ progress::-moz-progress-bar { border-radius: var(--pastilla); background: var(--
 .chat-pie form { display: flex; align-items: stretch; gap: 9px; }
 #duda { flex: 1; width: 100%; border-radius: var(--pastilla); }
 #duda::placeholder { color: var(--suave); }
-.opcion-deepseek { margin-top: 10px; font-size: .85rem; }
-.opcion-deepseek input { accent-color: var(--primario); }
-.opcion-deepseek p { margin: 2px 0 0; color: var(--suave); }
+.aviso-deepseek { margin: 8px 0 0; font-size: .85rem; color: var(--suave); }
 .pie { padding: 0 0 28px; text-align: center; }
 .alcance, .sin-script { color: var(--suave); font-size: .92rem; }
 .solo-lectores { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

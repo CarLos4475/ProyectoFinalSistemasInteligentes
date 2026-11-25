@@ -8,8 +8,8 @@
   <meta name="theme-color" content="#ece8f8">
   <title>Perfil de inversión</title>
   <link rel="icon" href="./assets/marca-clay.webp" type="image/webp">
-  <link rel="stylesheet" href="./styles.css?v=6">
-  <script type="module" src="./chat.mjs?v=7"></script>
+  <link rel="stylesheet" href="./styles.css?v=8">
+  <script type="module" src="./chat.mjs?v=8"></script>
 </head>
 <body>
   <header class="header">
@@ -118,13 +118,10 @@
           <footer class="chat-pie">
             <form id="consulta" autocomplete="off">
               <label class="solo-lectores" for="duda">Pregunta al chat</label>
-              <input id="duda" name="duda" type="text" maxlength="160" placeholder="¿Y si mi inversión cae 15 %?" required>
+              <input id="duda" name="duda" type="text" maxlength="480" placeholder="Escribe tu duda sobre la pregunta o el simulador" required>
               <button type="submit" class="boton-oscuro">Enviar</button>
             </form>
-            <div id="opcion-deepseek" class="opcion-deepseek" hidden>
-              <label><input type="checkbox" id="usar-deepseek" autocomplete="off"> Usar DeepSeek para interpretar mis preguntas</label>
-              <p>Al activarlo, el texto que envíes se comparte con DeepSeek.</p>
-            </div>
+            <p id="aviso-deepseek" class="aviso-deepseek" hidden>Al enviar, compartes tu mensaje con DeepSeek. Evita incluir datos personales.</p>
           </footer>
           <noscript><p class="sin-script">Activa JavaScript para usar el cuestionario.</p></noscript>
         </div>

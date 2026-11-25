@@ -1,5 +1,5 @@
 import { aclaracionCaida, preguntas } from './cuestionario.mjs?v=7';
-import { disponibleDeepSeek, interpretarDeepSeek } from './interprete.mjs';
+import { disponibleDeepSeek, interpretarDeepSeek } from './interprete.mjs?v=8';
 import { evaluarPerfil } from './perfil.mjs?v=2';
 import { ajustarCaida, describirCaida, iniciarSimulador, leerEscenario } from './simulador.mjs?v=6';
 
@@ -44,8 +44,7 @@ const reiniciar = document.querySelector('#reiniciar');
 const formulario = document.querySelector('#consulta');
 const duda = document.querySelector('#duda');
 const enviar = formulario.querySelector('button[type="submit"]');
-const opcionDeepSeek = document.querySelector('#opcion-deepseek');
-const usarDeepSeek = opcionDeepSeek.querySelector('#usar-deepseek');
+const avisoDeepSeek = document.querySelector('#aviso-deepseek');
 
 const respuestas = {};
 let editando = null;
@@ -339,29 +338,35 @@ formulario.addEventListener('submit', async (evento) => {
   const pregunta = duda.value.trim();
   if (!pregunta || enviar.disabled) return;
   const texto = pregunta.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+  const paso = editando ?? evaluarPerfil(respuestas).paso;
   let intencion = interpretarLocal(texto);
+  let falloDeepSeek = false;
   duda.value = '';
 
-  if (!opcionDeepSeek.hidden && usarDeepSeek.checked) {
+  if (!avisoDeepSeek.hidden) {
     enviar.disabled = true;
     const revision = revisionChat;
-    mostrarAyuda('Interpretando tu pregunta…');
-    const respuesta = await interpretarDeepSeek(pregunta);
+    mostrarAyuda('DeepSeek está respondiendo…');
+    const respuesta = await interpretarDeepSeek(pregunta, paso);
     enviar.disabled = false;
     if (revisionChat !== revision) return;
-    if (['explicar_perfil', 'simular_caida', 'aclarar_pregunta'].includes(respuesta?.accion)) {
+    if (respuesta?.accion === 'responder' && typeof respuesta.texto === 'string') {
+      mostrarAyuda(respuesta.texto);
+      return;
+    }
+    falloDeepSeek = !respuesta || respuesta.accion === 'sin_coincidencia';
+    if (respuesta?.accion === 'explicar_perfil' || respuesta?.accion === 'simular_caida') {
       intencion = respuesta;
     }
   }
 
   if (intencion?.accion === 'aclarar_pregunta') {
-    const paso = editando ?? evaluarPerfil(respuestas).paso;
     mostrarAyuda(catalogo[paso]?.ayuda
       ?? 'Ya tienes tu resultado. Abre «Revisar respuestas» y pulsa «Cambiar» en la pregunta que quieres aclarar.');
     return;
   }
   if (intencion?.accion === 'explicar_perfil') {
-    if (!editando && evaluarPerfil(respuestas).paso === 'resultado') mostrarMotivos();
+    if (paso === 'resultado') mostrarMotivos();
     else mostrarAyuda('Termina las preguntas del perfil y te explico qué respuestas llevaron al resultado.');
     return;
   }
@@ -379,11 +384,18 @@ formulario.addEventListener('submit', async (evento) => {
     mostrarAyuda(coincidencia[1]);
     return;
   }
+  if (falloDeepSeek) {
+    mostrarAyuda('DeepSeek no pudo responder. Intenta enviar tu pregunta otra vez.');
+    if (!duda.value) duda.value = pregunta;
+    return;
+  }
   mostrarAyuda('Puedes escribir «No entiendo esta pregunta», «¿Y si mi inversión cae 15 %?» o «¿Por qué me salió este perfil?».');
 });
 
-usarDeepSeek.checked = false;
-disponibleDeepSeek().then((disponible) => { opcionDeepSeek.hidden = !disponible; });
+disponibleDeepSeek().then((disponible) => {
+  avisoDeepSeek.hidden = !disponible;
+  if (disponible) duda.setAttribute('aria-describedby', avisoDeepSeek.id);
+});
 iniciarSimulador((plazo) => seleccionar('p4', plazo), () => {
   if (enviar.disabled) ocultarAyuda();
   actualizarVinculo();

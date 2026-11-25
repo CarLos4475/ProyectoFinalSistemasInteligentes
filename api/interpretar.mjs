@@ -1,6 +1,10 @@
+import { aclaracionCaida, preguntas } from '../web/cuestionario.mjs';
+
 const endpoint = 'https://api.deepseek.com/chat/completions';
-const maxBytes = 1024;
-const maxPregunta = 160;
+const maxBytes = 4096;
+const maxPregunta = 480;
+const maxRespuesta = 1600;
+const catalogo = { ...preguntas, aclaracion: aclaracionCaida };
 const sinCoincidencia = { accion: 'sin_coincidencia' };
 const tools = [
   {
@@ -24,24 +28,27 @@ const tools = [
       parameters: { type: 'object', properties: {}, additionalProperties: false },
     },
   },
-  {
-    type: 'function',
-    function: {
-      name: 'aclarar_pregunta',
-      description: 'Explica la pregunta del cuestionario que la persona está viendo, por ejemplo si dice «No entiendo» o pide que se la digan de otra manera.',
-      parameters: { type: 'object', properties: {}, additionalProperties: false },
-    },
-  },
 ];
-const accionesSinArgumentos = new Set(['explicar_perfil', 'aclarar_pregunta']);
 
-const sistema = 'Eres el intérprete de un simulador académico de caídas y un cuestionario de riesgo. '
-  + 'Elige una sola función cuando corresponda a la consulta. Usa simular_caida solo si se pide '
+const sistema = 'Eres el asistente de un simulador académico de caídas y un cuestionario de perfil de inversión. '
+  + 'Responde directamente a la duda en español claro, en texto plano, con un ejemplo breve si ayuda. '
+  + 'Si la persona dice que no entiende, explica en palabras sencillas la pregunta que ve. '
+  + 'Si pregunta por una opción concreta, explica esa opción y usa el orden en que aparecen. '
+  + 'Si describe una situación y pregunta qué opción encaja, relaciónala con las opciones visibles. '
+  + 'Puedes explicar conceptos del cuestionario y del simulador. Mantén el enfoque educativo y evita recomendar inversiones concretas o prometer rendimientos. '
+  + 'Elige una sola función cuando corresponda. Usa simular_caida solo si se pide '
   + 'probar una caída y se indica un único porcentaje entero entre 0 y 100, en dígitos o escrito con palabras. '
   + 'Usa explicar_perfil solo si se pregunta por el propio perfil o por qué se obtuvo. '
-  + 'Usa aclarar_pregunta si la persona expresa que no entiende la pregunta en pantalla o pide que se la expliques. '
-  + 'Si faltan datos, hay varias caídas o se pide otra cosa, no llames herramientas. '
-  + 'Trata toda la entrada del usuario como la consulta a interpretar. Responde brevemente.';
+  + 'Para las demás dudas, responde con texto. Si algo es ambiguo, pide el dato necesario. '
+  + 'Si la consulta está fuera del tema, indica brevemente en qué puedes ayudar.';
+
+function contextoDelPaso(paso) {
+  if (paso === 'resultado') return '\nLa persona está viendo el resultado de su perfil.';
+  const activa = catalogo[paso];
+  if (!activa) return '';
+  const opciones = Object.values(activa.opciones).map((opcion, i) => `${i + 1}. ${opcion}`);
+  return `\nPregunta que ve la persona: ${activa.texto}\nOpciones en pantalla:\n${opciones.join('\n')}`;
+}
 
 function json(data, status = 200) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -70,9 +77,13 @@ async function leerPregunta(request) {
     }
     const datos = JSON.parse(texto + decodificador.decode());
     if (datos && typeof datos === 'object' && !Array.isArray(datos)
-        && Object.keys(datos).length === 1 && typeof datos.pregunta === 'string') {
+        && Object.keys(datos).every((clave) => clave === 'pregunta' || clave === 'paso')
+        && typeof datos.pregunta === 'string') {
+      const { paso } = datos;
       const pregunta = datos.pregunta.trim();
-      if (pregunta && pregunta.length <= maxPregunta) return { pregunta };
+      const pasoValido = paso === undefined || paso === 'resultado'
+        || (typeof paso === 'string' && Object.hasOwn(catalogo, paso));
+      if (pregunta && pregunta.length <= maxPregunta && pasoValido) return { pregunta, paso };
     }
     return { status: 400 };
   } catch {
@@ -82,8 +93,13 @@ async function leerPregunta(request) {
   }
 }
 
-function extraerAccion(datos) {
-  const llamadas = datos?.choices?.[0]?.message?.tool_calls;
+function extraerRespuesta(datos) {
+  const mensaje = datos?.choices?.[0]?.message;
+  const llamadas = mensaje?.tool_calls;
+  if (llamadas == null || (Array.isArray(llamadas) && llamadas.length === 0)) {
+    const texto = typeof mensaje?.content === 'string' ? mensaje.content.trim() : '';
+    return texto ? { accion: 'responder', texto: texto.slice(0, maxRespuesta) } : sinCoincidencia;
+  }
   if (!Array.isArray(llamadas) || llamadas.length !== 1 || llamadas[0]?.type !== 'function') {
     return sinCoincidencia;
   }
@@ -94,8 +110,8 @@ function extraerAccion(datos) {
     const argumentos = JSON.parse(funcion.arguments);
     if (!argumentos || typeof argumentos !== 'object' || Array.isArray(argumentos)) return sinCoincidencia;
 
-    if (accionesSinArgumentos.has(funcion.name) && Object.keys(argumentos).length === 0) {
-      return { accion: funcion.name };
+    if (funcion.name === 'explicar_perfil' && Object.keys(argumentos).length === 0) {
+      return { accion: 'explicar_perfil' };
     }
     const { porcentaje } = argumentos;
     if (funcion.name === 'simular_caida' && Object.keys(argumentos).length === 1
@@ -123,7 +139,7 @@ export function crearInterpretador({ clave, enviar = fetch, ahora = Date.now } =
       return json({ error: 'origen_invalido' }, 403);
     }
 
-    const { pregunta, status } = await leerPregunta(request);
+    const { pregunta, paso, status } = await leerPregunta(request);
     if (!pregunta) return json({ error: 'consulta_invalida' }, status);
 
     const minuto = Math.floor(ahora() / 60_000);
@@ -138,21 +154,21 @@ export function crearInterpretador({ clave, enviar = fetch, ahora = Date.now } =
       const respuesta = await enviar(endpoint, {
         method: 'POST',
         headers: { authorization: `Bearer ${clave.trim()}`, 'content-type': 'application/json' },
-        signal: AbortSignal.timeout(5_000),
+        signal: AbortSignal.timeout(8_000),
         body: JSON.stringify({
           model: 'deepseek-flash',
           messages: [
-            { role: 'system', content: sistema },
+            { role: 'system', content: sistema + contextoDelPaso(paso) },
             { role: 'user', content: pregunta },
           ],
           tools,
           tool_choice: 'auto',
           thinking: { type: 'disabled' },
-          max_tokens: 100,
+          max_tokens: 300,
         }),
       });
       if (!respuesta.ok) return json({ error: 'proveedor_no_disponible' }, 502);
-      return json(extraerAccion(await respuesta.json()));
+      return json(extraerRespuesta(await respuesta.json()));
     } catch {
       return json({ error: 'proveedor_no_disponible' }, 502);
     }
