@@ -299,12 +299,13 @@ function interpretarLocal(texto) {
   if (/\b(por que|explica|explicame)\b.*\bperfil\b/.test(texto)) {
     return { accion: 'explicar_perfil' };
   }
-  const porcentajes = [...texto.matchAll(/([+-]?\d+(?:[.,]\d+)?)\s*(?:%|por ciento\b)/g)];
-  if (/\b(cae|caer|caida|baja|bajara|pierde|perdida|perder)\b/.test(texto) && porcentajes.length === 1) {
-    const porcentaje = Number(porcentajes[0][1].replace(',', '.'));
-    if (Number.isInteger(porcentaje) && porcentaje >= 0 && porcentaje <= 100) {
-      return { accion: 'simular_caida', porcentaje };
-    }
+  const pideSimular = /\b(y si|que pasa|que pasaria|simula|simular|prueba|probar|me alcanza|alcanzaria|me queda|quedaria)\b/.test(texto);
+  const mencionaCaida = /\b(cae|caer|caida|baja|bajara|pierde|perdida|perder)\b/.test(texto);
+  if (!pideSimular || !mencionaCaida || texto.match(/%|por ciento\b/g)?.length !== 1) return null;
+
+  const coincidencia = texto.match(/(?<![\p{L}\p{N}.,+-])(\d{1,3})\s*(?:%|por ciento\b)/u);
+  if (coincidencia && Number(coincidencia[1]) <= 100) {
+    return { accion: 'simular_caida', porcentaje: Number(coincidencia[1]) };
   }
   return null;
 }
@@ -353,5 +354,8 @@ formulario.addEventListener('submit', async (evento) => {
 
 usarDeepSeek.checked = false;
 disponibleDeepSeek().then((disponible) => { opcionDeepSeek.hidden = !disponible; });
-iniciarSimulador((plazo) => seleccionar('p4', plazo), actualizarVinculo);
+iniciarSimulador((plazo) => seleccionar('p4', plazo), () => {
+  if (enviar.disabled) ocultarAyuda();
+  actualizarVinculo();
+});
 renderizar();
