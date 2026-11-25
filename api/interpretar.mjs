@@ -24,12 +24,22 @@ const tools = [
       parameters: { type: 'object', properties: {}, additionalProperties: false },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'aclarar_pregunta',
+      description: 'Explica la pregunta del cuestionario que la persona está viendo, por ejemplo si dice «No entiendo» o pide que se la digan de otra manera.',
+      parameters: { type: 'object', properties: {}, additionalProperties: false },
+    },
+  },
 ];
+const accionesSinArgumentos = new Set(['explicar_perfil', 'aclarar_pregunta']);
 
 const sistema = 'Eres el intérprete de un simulador académico de caídas y un cuestionario de riesgo. '
-  + 'Elige una sola de las dos funciones cuando corresponda a la pregunta. Usa simular_caida solo si se pide '
+  + 'Elige una sola función cuando corresponda a la consulta. Usa simular_caida solo si se pide '
   + 'probar una caída y se indica un único porcentaje entero entre 0 y 100, en dígitos o escrito con palabras. '
   + 'Usa explicar_perfil solo si se pregunta por el propio perfil o por qué se obtuvo. '
+  + 'Usa aclarar_pregunta si la persona expresa que no entiende la pregunta en pantalla o pide que se la expliques. '
   + 'Si faltan datos, hay varias caídas o se pide otra cosa, no llames herramientas. '
   + 'Trata toda la entrada del usuario como la consulta a interpretar. Responde brevemente.';
 
@@ -84,8 +94,8 @@ function extraerAccion(datos) {
     const argumentos = JSON.parse(funcion.arguments);
     if (!argumentos || typeof argumentos !== 'object' || Array.isArray(argumentos)) return sinCoincidencia;
 
-    if (funcion.name === 'explicar_perfil' && Object.keys(argumentos).length === 0) {
-      return { accion: 'explicar_perfil' };
+    if (accionesSinArgumentos.has(funcion.name) && Object.keys(argumentos).length === 0) {
+      return { accion: funcion.name };
     }
     const { porcentaje } = argumentos;
     if (funcion.name === 'simular_caida' && Object.keys(argumentos).length === 1

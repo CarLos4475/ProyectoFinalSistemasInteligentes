@@ -30,7 +30,9 @@ test('envía la pregunta mínima y devuelve la acción validada', async () => {
       assert.equal(options.headers.authorization, 'Bearer clave-ficticia');
       const payload = JSON.parse(options.body);
       assert.equal(payload.messages.at(-1).content, '¿Qué pasa si baja 15 %?');
-      assert.deepEqual(payload.tools.map((tool) => tool.function.name), ['simular_caida', 'explicar_perfil']);
+      assert.deepEqual(payload.tools.map((tool) => tool.function.name), [
+        'simular_caida', 'explicar_perfil', 'aclarar_pregunta',
+      ]);
       return proveedor(simular({ porcentaje: 15 }));
     },
   });
@@ -46,12 +48,21 @@ test('acepta la explicación del perfil como segunda acción', async () => {
   assert.deepEqual(await response.json(), { accion: 'explicar_perfil' });
 });
 
+test('permite pedir una aclaración de la pregunta del cuestionario', async () => {
+  const handler = crearInterpretador({
+    clave: 'ficticia', enviar: async () => proveedor({ name: 'aclarar_pregunta', arguments: '{}' }),
+  });
+  const response = await handler(solicitud({ pregunta: 'No entiendo.' }));
+  assert.deepEqual(await response.json(), { accion: 'aclarar_pregunta' });
+});
+
 test('rechaza respuestas ambiguas o campos inventados por el modelo', async () => {
   for (const functions of [
     [simular({ porcentaje: 150 })],
     [simular({ porcentaje: 15, monto: 800 })],
     [{ name: 'simular_caida', arguments: '15' }],
     [simular({ porcentaje: 10 }), simular({ porcentaje: 20 })],
+    [{ name: 'aclarar_pregunta', arguments: '{"pregunta":"p1"}' }],
     [{ name: 'invertir', arguments: '{}' }],
   ]) {
     const handler = crearInterpretador({ clave: 'ficticia', enviar: async () => proveedor(...functions) });
