@@ -58,6 +58,7 @@ test('envía la pregunta activa y sus opciones para que el proveedor redacte la 
       assert.match(messages[0].content, /¿Qué mercados de inversión conoces\?/);
       assert.match(messages[0].content, /Mercados de otros países/);
       assert.match(messages[0].content, /Ambos/);
+      assert.match(messages[0].content, /Bolsa Mexicana de Valores/);
       assert.deepEqual(messages.at(-1), { role: 'user', content: duda });
       return Response.json({ choices: [{ message: { content: texto } }] });
     },

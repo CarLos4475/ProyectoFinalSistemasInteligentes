@@ -31,7 +31,8 @@ const tools = [
 ];
 
 const sistema = 'Eres el asistente de un simulador académico de caídas y un cuestionario de perfil de inversión. '
-  + 'Responde directamente a la duda en español claro, en texto plano, con un ejemplo breve si ayuda. '
+  + 'Responde directamente en español claro y texto plano, en dos a cuatro frases. '
+  + 'Si la persona plantea un caso, usa solo los datos que dio y evita añadir casos hipotéticos. '
   + 'Si la persona dice que no entiende, explica en palabras sencillas la pregunta que ve. '
   + 'Si pregunta por una opción concreta, explica esa opción y usa el orden en que aparecen. '
   + 'Si describe una situación y pregunta qué opción encaja, relaciónala con las opciones visibles. '
@@ -47,7 +48,7 @@ function contextoDelPaso(paso) {
   const activa = catalogo[paso];
   if (!activa) return '';
   const opciones = Object.values(activa.opciones).map((opcion, i) => `${i + 1}. ${opcion}`);
-  return `\nPregunta que ve la persona: ${activa.texto}\nOpciones en pantalla:\n${opciones.join('\n')}`;
+  return `\nPregunta que ve la persona: ${activa.texto}\nOpciones en pantalla:\n${opciones.join('\n')}\nGuía del cuestionario: ${activa.ayuda}`;
 }
 
 function json(data, status = 200) {
@@ -164,7 +165,7 @@ export function crearInterpretador({ clave, enviar = fetch, ahora = Date.now } =
           tools,
           tool_choice: 'auto',
           thinking: { type: 'disabled' },
-          max_tokens: 300,
+          max_tokens: 220,
         }),
       });
       if (!respuesta.ok) return json({ error: 'proveedor_no_disponible' }, 502);
