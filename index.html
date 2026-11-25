@@ -2,20 +2,20 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Explora tu perfil de riesgo y entiende qué respuestas explican tu resultado.">
-  <meta name="theme-color" content="#151517">
+  <meta name="theme-color" content="#ece8f8">
   <title>Perfil de inversión</title>
-  <link rel="icon" href="./assets/marca.webp" type="image/webp">
-  <link rel="stylesheet" href="./styles.css?v=5">
-  <script type="module" src="./chat.mjs?v=5"></script>
+  <link rel="icon" href="./assets/marca-clay.webp" type="image/webp">
+  <link rel="stylesheet" href="./styles.css?v=6">
+  <script type="module" src="./chat.mjs?v=6"></script>
 </head>
 <body>
   <header class="header">
     <div class="contenedor cabecera">
       <div class="marca">
-        <img class="marca-icono" src="./assets/marca.webp" width="34" height="34" alt="">
+        <img class="marca-icono" src="./assets/marca-clay.webp" width="48" height="48" alt="">
         <span>Perfil de inversión</span>
       </div>
       <span class="contexto">Proyecto académico</span>
@@ -34,7 +34,19 @@
             <a class="enlace-portada" href="#cuestionario">Ir al cuestionario</a>
           </div>
         </div>
-        <img class="portada-imagen" src="./assets/brujula.webp" width="1080" height="720" alt="" fetchpriority="high">
+        <div class="portada-visual">
+          <div class="portada-resultado tarjeta-clay" data-escenario-panel data-balance="faltante">
+            <p class="portada-contexto">Escenario hipotético <span aria-hidden="true">·</span> Caída del <span data-escenario-pct>15 %</span></p>
+            <p class="saldo" data-escenario-saldo>$8,500</p>
+            <p class="chip-balance" data-escenario-balance>Faltan $500</p>
+            <div class="medidor-meta">
+              <progress data-escenario-cobertura max="100" value="94.44" aria-label="Meta cubierta"></progress>
+            </div>
+            <div class="leyenda-meta"><span>Saldo</span><span>Meta <span data-escenario-meta>$9,000</span></span></div>
+          </div>
+          <div class="esfera esfera-caida" data-escenario-orb aria-hidden="true">−15 %</div>
+          <div class="esfera esfera-menta" aria-hidden="true"></div>
+        </div>
       </div>
     </section>
 
@@ -64,16 +76,24 @@
             <div class="caida">
               <div>
                 <label for="caida">Caída simulada</label>
-                <output id="caida-valor" for="caida">20 %</output>
+                <output id="caida-valor" for="caida">15 %</output>
               </div>
-              <input id="caida" type="range" min="0" max="100" step="1" value="20" aria-valuetext="20 por ciento">
+              <div class="caida-control">
+                <progress class="barra-caida" id="barra-caida" max="100" value="15" aria-hidden="true"></progress>
+                <input id="caida" type="range" min="0" max="100" step="1" value="15" aria-valuetext="15 por ciento">
+              </div>
             </div>
             <button class="boton-oscuro" type="submit">Usar este plazo en el cuestionario</button>
           </form>
-          <div class="escenario-resultado" role="status" aria-live="polite">
+          <div class="escenario-resultado tarjeta-clay" data-escenario-panel data-balance="faltante" role="status" aria-live="polite">
             <p id="escenario-titulo">Tu saldo después de la caída</p>
-            <p id="saldo-caida" class="saldo">$8,000</p>
-            <p id="resultado-caida">Te faltarían $1,000 para alcanzar tu meta.</p>
+            <p id="saldo-caida" class="saldo" data-escenario-saldo>$8,500</p>
+            <p id="resultado-caida" class="chip-balance">Te faltarían $500 para alcanzar tu meta.</p>
+            <div class="medidor-meta medidor-simulador">
+              <progress data-escenario-cobertura max="100" value="94.44" aria-label="Meta cubierta"></progress>
+            </div>
+            <div class="leyenda-meta"><span>Saldo</span><span>Meta <span data-escenario-meta>$9,000</span></span></div>
+            <p class="escenario-nota">Escenario hipotético.</p>
           </div>
         </div>
       </section>
@@ -81,30 +101,45 @@
 
     <div class="zona-chat">
       <section class="chat contenedor" id="cuestionario" aria-labelledby="titulo-chat" tabindex="-1">
-        <header class="chat-cabecera">
-          <img class="asistente" src="./assets/asistente.webp" width="42" height="42" alt="">
-          <div class="chat-identidad">
-            <h2 id="titulo-chat">Chat de perfil</h2>
-            <p id="progreso">Pregunta 1 de 14</p>
+        <div class="chat-panel tarjeta-clay">
+          <header class="chat-cabecera">
+            <img class="asistente" src="./assets/asistente-clay.webp" width="49" height="49" alt="">
+            <div class="chat-identidad">
+              <h2 id="titulo-chat">Chat de perfil</h2>
+              <p id="progreso">Pregunta 1 de 14</p>
+            </div>
+            <button type="button" class="boton-texto" id="reiniciar" hidden>Reiniciar</button>
+            <progress class="barra-chat" id="barra-chat" value="0" max="14" aria-label="Respuestas registradas"></progress>
+          </header>
+          <div class="chat-cuerpo">
+            <div id="conversacion"></div>
+            <div id="ayuda-respuesta" class="ayuda" role="status" hidden></div>
           </div>
-          <button type="button" class="boton-texto" id="reiniciar" hidden>Reiniciar</button>
-        </header>
-        <div class="chat-cuerpo">
-          <div id="conversacion"></div>
-          <div id="ayuda-respuesta" class="ayuda" role="status" hidden></div>
+          <footer class="chat-pie">
+            <form id="consulta" autocomplete="off">
+              <label class="solo-lectores" for="duda">Pregunta al chat</label>
+              <input id="duda" name="duda" type="text" maxlength="160" placeholder="¿Y si mi inversión cae 15 %?" required>
+              <button type="submit" class="boton-oscuro">Enviar</button>
+            </form>
+            <div id="opcion-deepseek" class="opcion-deepseek" hidden>
+              <label><input type="checkbox" id="usar-deepseek" autocomplete="off"> Usar DeepSeek para interpretar mis preguntas</label>
+              <p>Al activarlo, el texto que envíes se comparte con DeepSeek.</p>
+            </div>
+          </footer>
+          <noscript><p class="sin-script">Activa JavaScript para usar el cuestionario.</p></noscript>
         </div>
-        <footer class="chat-pie">
-          <form id="consulta" autocomplete="off">
-            <label class="solo-lectores" for="duda">Pregunta al chat</label>
-            <input id="duda" name="duda" type="text" maxlength="160" placeholder="¿Y si mi inversión cae 15 %?" required>
-            <button type="submit" class="boton-oscuro">Enviar</button>
-          </form>
-          <div id="opcion-deepseek" class="opcion-deepseek" hidden>
-            <label><input type="checkbox" id="usar-deepseek" autocomplete="off"> Usar DeepSeek para interpretar mis preguntas</label>
-            <p>Al activarlo, el texto que envíes se comparte con DeepSeek.</p>
-          </div>
-        </footer>
-        <noscript><p class="sin-script">Activa JavaScript para usar el cuestionario.</p></noscript>
+        <aside class="chat-lateral" id="chat-lateral">
+          <section class="tarjeta-clay resumen-lateral" data-escenario-panel data-balance="faltante" aria-labelledby="escenario-lateral">
+            <h3 id="escenario-lateral">Tu escenario</h3>
+            <p class="saldo" data-escenario-saldo>$8,500</p>
+            <p class="chip-balance" data-escenario-balance>Faltan $500</p>
+            <p class="datos-lateral">Caída del <span data-escenario-pct>15 %</span> <span aria-hidden="true">·</span> <span data-escenario-plazo>En menos de 1 año</span></p>
+          </section>
+          <section class="tarjeta-clay resumen-lateral" aria-labelledby="liquidez-lateral">
+            <h3 id="liquidez-lateral">¿Qué es la liquidez?</h3>
+            <p>Es la facilidad de convertir una inversión en dinero disponible.</p>
+          </section>
+        </aside>
       </section>
     </div>
   </main>
