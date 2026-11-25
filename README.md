@@ -18,9 +18,21 @@ Abre [el simulador](http://localhost:8000). El navegador calcula el saldo en pes
 
 El equipo retomó las 14 preguntas de perfilamiento del Excel. El objetivo y el plazo fijan el nivel máximo de riesgo. La reacción ante las pérdidas, el porcentaje que haría actuar y la preferencia de riesgo indican la tolerancia. El motor toma el nivel menor de los dos. La experiencia declarada le da contexto a la explicación.
 
-Las 350 respuestas del Excel son simuladas y sirven para probar las reglas. La [especificación del cuestionario completo](docs/superpowers/specs/2026-11-23-cuestionario-completo-design.md) explica cada criterio.
+Los 350 casos de prueba del Excel sirven para comprobar qué reglas se activan y explorar patrones de respuesta. La [especificación del cuestionario completo](docs/superpowers/specs/2026-11-23-cuestionario-completo-design.md) explica cada criterio.
 
 El resultado es orientativo y forma parte de un proyecto académico.
+
+## Documentación y análisis
+
+- [Documentación técnica](docs/DOCUMENTACION_TECNICA.pdf)
+- [Documentación de negocio](docs/DOCUMENTACION_NEGOCIO.pdf)
+
+Para repetir la revisión del Excel y el análisis con K-modes, usa Python 3.11 o posterior y Node.js. Indica la ruta de tu archivo de trabajo.
+
+```text
+python -m pip install -r analisis/requirements.txt
+python analisis/perfil_inversion.py "perfil_inversionista_350_respuestas.xlsx" --salida resultados.json
+```
 
 ## Publicar en Vercel
 
