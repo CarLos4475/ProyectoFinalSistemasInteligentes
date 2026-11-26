@@ -27,7 +27,7 @@ El resultado es orientativo. Tolera no recomienda inversiones concretas.
 - [Documentación técnica](docs/DOCUMENTACION_TECNICA.pdf)
 - [Documentación de negocio](docs/DOCUMENTACION_NEGOCIO.pdf)
 
-El análisis limpia las respuestas del formulario, revisa el Excel, agrupa los casos con K-modes y entrena un árbol de decisión con GridSearchCV. Necesitas Python 3.11 o posterior y Node.js. Indica la ruta de tus archivos.
+El análisis limpia las respuestas del formulario, revisa el Excel, mide la sensibilidad de las reglas, agrupa los casos con K-modes y entrena un árbol de decisión con GridSearchCV. Necesitas Python 3.11 o posterior y Node.js. Indica la ruta de tus archivos.
 
 ```text
 python -m pip install -r analisis/requirements.txt

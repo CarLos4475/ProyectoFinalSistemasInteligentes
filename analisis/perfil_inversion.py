@@ -1,5 +1,5 @@
-"""Audita el Excel, evalúa las reglas de la web, agrupa respuestas con K-modes
-y mide con un árbol de decisión cuántas preguntas bastan para anticipar el perfil."""
+"""Audita el Excel, evalúa las reglas de la web, mide su sensibilidad, agrupa respuestas
+con K-modes y mide con un árbol de decisión cuántas preguntas bastan para anticipar el perfil."""
 
 import argparse
 from collections import Counter
@@ -21,6 +21,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 from catalogo import cargar_preguntas
 from limpieza import comparar_con_excel, limpiar_formulario
+from sensibilidad import sensibilidad, sensibilidad_baremo
 
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -264,6 +265,10 @@ def analizar(path, formulario=None):
         "frecuencias": frecuencias,
         "reglas": {nombre: estado[nombre] for nombre in ESTADOS},
         "p9_sin_umbral": sum(caso["p9"] == "D" for caso in casos),
+        "sensibilidad": {
+            "reglas": sensibilidad(casos, estados),
+            "baremo_anterior": sensibilidad_baremo(registros),
+        },
         "kmodes": agrupar(casos, preguntas, estados),
         "arbol": clasificar(casos, estados),
     }
