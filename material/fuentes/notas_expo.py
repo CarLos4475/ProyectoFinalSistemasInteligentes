@@ -188,7 +188,11 @@ d.tabla([
                                            "texto mala, no un perfil falso."],
     ["¿Y si DeepSeek falla?", "El chat usa explicaciones locales: un glosario y patrones para simular caídas o "
                               "aclarar preguntas."],
-    ["¿Por qué DeepSeek?", "[Respuesta del equipo.]"],
+    ["¿Por qué DeepSeek?", "Por precio: es barato, y el chat responde dudas cortas. Además, la conexión está "
+                           "en un solo archivo, api/interpretar.mjs, así que cambiar de proveedor no toca el resto."],
+    ["¿Y la calidad de las respuestas?", "El perfil no depende del modelo, lo calculan las reglas. El modelo solo "
+                                         "explica, y en las pruebas entendió el contexto y las referencias a la "
+                                         "conversación."],
 ], [160, 360])
 
 d.subtitulo("Nube y trabajo futuro")
