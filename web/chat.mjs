@@ -1,7 +1,9 @@
 import { aclaracionCaida, preguntas } from './cuestionario.mjs?v=7';
-import { disponibleDeepSeek, interpretarDeepSeek } from './interprete.mjs?v=9';
+import { disponibleDeepSeek, interpretarDeepSeek } from './interprete.mjs?v=10';
 import { evaluarPerfil } from './perfil.mjs?v=2';
-import { ajustarCaida, describirCaida, iniciarSimulador, leerEscenario, restablecerEscenario } from './simulador.mjs?v=11';
+import {
+  ajustarCaida, compararCaida, describirCaida, iniciarSimulador, leerEscenario, margenDeMeta, restablecerEscenario,
+} from './simulador.mjs?v=12';
 
 const orden = Object.keys(preguntas);
 const catalogo = { ...preguntas, aclaracion: aclaracionCaida };
@@ -25,6 +27,14 @@ const limites = {
   ingresos: 'Quieres recibir ingresos periódicos. En este cuestionario, ese objetivo pone el límite en moderado.',
   'plazo-medio': 'Necesitarías el dinero en uno a tres años. Para ese plazo, el nivel máximo del cuestionario es moderado.',
   'objetivo-y-plazo': 'Elegiste un objetivo de crecimiento o especulación y un plazo de más de tres años. Con esas respuestas, la tolerancia puede llevar a cualquiera de los tres perfiles.',
+};
+
+const umbrales = { A: 5, B: 10, C: 20 };
+const maxHistorial = 6;
+const siguientes = {
+  conservador: 'Un perfil conservador suele dar prioridad a cuidar el dinero y a poder disponer de él. Por eso tiende a instrumentos de deuda de corto plazo y bajo riesgo, como CETES o fondos de deuda.',
+  moderado: 'Un perfil moderado suele combinar instrumentos de deuda con una parte en renta variable, como fondos que invierten en acciones. Acepta algunas caídas a cambio de buscar un rendimiento mayor.',
+  propenso: 'Un perfil propenso al riesgo suele aceptar una parte mayor en renta variable. Su valor puede caer más en el corto plazo, así que conviene que el plazo permita esperar una recuperación.',
 };
 
 const glosario = [
@@ -58,6 +68,7 @@ const formulario = document.querySelector('#consulta');
 const duda = document.querySelector('#duda');
 const enviar = formulario.querySelector('button[type="submit"]');
 const avisoDeepSeek = document.querySelector('#aviso-deepseek');
+const hilo = document.querySelector('#hilo');
 
 const respuestas = {};
 let editando = null;
@@ -65,6 +76,9 @@ let vista = 'inicio';
 let usoSimulador = false;
 let mostrandoDemo = false;
 let revisionChat = 0;
+// Conversación reciente: «texto» viaja al modelo y «mostrado» se ve en pantalla (puede incluir pesos).
+const historial = [];
+let parVisible = false;
 
 function elemento(tag, clase, texto) {
   const nodo = document.createElement(tag);
@@ -80,12 +94,67 @@ function boton(texto, clase, accion) {
   return control;
 }
 
+function renderizarHilo() {
+  const visibles = parVisible ? historial.slice(0, -2) : historial;
+  hilo.replaceChildren(...visibles.map(({ rol, mostrado }) =>
+    elemento('p', rol === 'persona' ? 'mensaje-usuario' : 'ayuda ayuda--previa', mostrado)));
+  hilo.hidden = visibles.length === 0;
+}
+
+function registrar(pregunta, texto, mostrado = texto) {
+  historial.push(
+    { rol: 'persona', texto: pregunta, mostrado: pregunta },
+    { rol: 'tolera', texto: texto.slice(0, 1600), mostrado },
+  );
+  historial.splice(0, Math.max(0, historial.length - maxHistorial));
+  parVisible = true;
+  renderizarHilo();
+}
+
 function ocultarAyuda() {
   revisionChat += 1;
   ayuda.hidden = true;
   ayuda.textContent = '';
   mensajeUsuario.hidden = true;
   mensajeUsuario.textContent = '';
+  parVisible = false;
+  renderizarHilo();
+}
+
+function escenarioUsado() {
+  return usoSimulador ? leerEscenario() : null;
+}
+
+function escenarioParaChat() {
+  const escenario = escenarioUsado();
+  if (!escenario) return undefined;
+  const cobertura = Math.min(10_000, Math.round((100 * escenario.saldo) / escenario.meta));
+  return { caida: escenario.porcentaje, cobertura, plazo: escenario.plazo };
+}
+
+function textoMargen(escenario) {
+  const margen = margenDeMeta(escenario);
+  return margen < 0
+    ? 'Incluso sin caída, tu monto disponible no alcanza tu meta.'
+    : `Tu meta aguanta caídas de hasta ${margen} %.`;
+}
+
+function umbralElegido() {
+  return umbrales[respuestas.p9] ?? umbrales[respuestas.aclaracion] ?? null;
+}
+
+function toleranciaEnPesos(escenario) {
+  const umbral = umbralElegido();
+  if (umbral === null) return `No elegiste una caída concreta. ${textoMargen(escenario)}`;
+  const margen = margenDeMeta(escenario);
+  let lectura = '';
+  if (margen >= 0) {
+    lectura = umbral > margen
+      ? ' Una caída que todavía aguantarías ya dejaría tu meta sin cubrir.'
+      : ' Tu meta resiste la caída que te haría actuar.';
+  }
+  return `Dijiste que tomarías medidas al caer ${umbral} %. ${describirCaida(compararCaida(escenario, umbral))} `
+    + `${textoMargen(escenario)}${lectura}`;
 }
 
 function navegar(destino, enfocar = true, desdeURL = false) {
@@ -230,11 +299,28 @@ function renderizarResultado(resultado) {
   encabezado.tabIndex = -1;
   const { limite, tolerancia } = resultado;
   detalle.append(encabezado);
-  for (const [tema, ...contenido] of [
+  const tarjetas = [
     ['Objetivo y plazo', elemento('p', '', limite.razones.map((razon) => limites[razon]).join(' '))],
     ['Tolerancia a pérdidas', describirSenales(tolerancia), elemento('p', '', explicarTolerancia(tolerancia))],
-    ['Tu experiencia', elemento('p', '', describirExperiencia())],
-  ]) {
+  ];
+  const escenarioActual = escenarioUsado();
+  if (escenarioActual) tarjetas.push(['Tu tolerancia en pesos', elemento('p', '', toleranciaEnPesos(escenarioActual))]);
+  tarjetas.push(['Tu experiencia', elemento('p', '', describirExperiencia())]);
+  const preguntasAsesor = elemento('ul');
+  for (const texto of [
+    '¿Cuánto podría caer esta inversión en un mal año?',
+    '¿Puedo retirar mi dinero antes de mi plazo y cuánto me costaría?',
+    '¿Qué comisiones cobra?',
+    `¿Esta opción corresponde a un perfil ${perfiles[resultado.perfil].toLowerCase()}?`,
+  ]) preguntasAsesor.append(elemento('li', '', texto));
+  tarjetas.push([
+    '¿Y ahora qué?',
+    elemento('p', '', siguientes[resultado.perfil]),
+    elemento('p', 'motivo-subtitulo', 'Preguntas para llevar a tu asesor o a tu banco'),
+    preguntasAsesor,
+    elemento('p', 'motivo-nota', 'Es información general para orientarte, no una recomendación de inversión.'),
+  ]);
+  for (const [tema, ...contenido] of tarjetas) {
     const motivo = elemento('section', 'tarjeta-motivo tarjeta-clay');
     motivo.append(elemento('h4', '', tema), ...contenido);
     detalle.append(motivo);
@@ -259,6 +345,16 @@ function renderizarPregunta(paso) {
     opciones.append(control);
   }
   caja.append(titulo, opciones);
+  const escenario = escenarioUsado();
+  if ((paso === 'p9' || paso === 'aclaracion') && escenario) {
+    const bloque = elemento('section', 'umbrales');
+    const lista = elemento('ul');
+    for (const porcentaje of Object.values(umbrales)) {
+      lista.append(elemento('li', '', describirCaida(compararCaida(escenario, porcentaje))));
+    }
+    bloque.append(elemento('h4', '', 'Estas caídas con tu escenario'), lista, elemento('p', '', textoMargen(escenario)));
+    caja.append(bloque);
+  }
   conversacion.append(caja);
 
   const indice = orden.indexOf(paso);
@@ -366,6 +462,7 @@ function renderizar(enfocar = false) {
 
 function reiniciarCuestionario() {
   for (const clave of Object.keys(respuestas)) delete respuestas[clave];
+  historial.length = 0;
   editando = null;
   usoSimulador = false;
   mostrandoDemo = false;
@@ -448,18 +545,28 @@ formulario.addEventListener('submit', async (evento) => {
   let intencion = interpretarLocal(texto);
   let falloDeepSeek = false;
   duda.value = '';
+  parVisible = false;
+  renderizarHilo();
   mensajeUsuario.textContent = pregunta;
   mensajeUsuario.hidden = false;
+  const contestar = (respuesta, mostrado = respuesta) => {
+    mostrarAyuda(mostrado);
+    registrar(pregunta, respuesta, mostrado);
+  };
 
   if (!avisoDeepSeek.hidden) {
     enviar.disabled = true;
     const revision = revisionChat;
     mostrarAyuda('DeepSeek Flash');
-    const respuesta = await interpretarDeepSeek(pregunta, paso, respuestas);
+    const respuesta = await interpretarDeepSeek({
+      pregunta, paso, respuestas,
+      historial: historial.map(({ rol, texto: contenido }) => ({ rol, texto: contenido })),
+      escenario: escenarioParaChat(),
+    });
     enviar.disabled = false;
     if (revisionChat !== revision) return;
     if (respuesta?.accion === 'responder' && typeof respuesta.texto === 'string') {
-      mostrarAyuda(respuesta.texto);
+      contestar(respuesta.texto);
       return;
     }
     falloDeepSeek = !respuesta || respuesta.accion === 'sin_coincidencia';
@@ -469,27 +576,35 @@ formulario.addEventListener('submit', async (evento) => {
   }
 
   if (intencion?.accion === 'aclarar_pregunta') {
-    mostrarAyuda(catalogo[paso]?.ayuda
+    contestar(catalogo[paso]?.ayuda
       ?? 'Ya tienes tu resultado. Abre «Revisar respuestas» y pulsa «Cambiar» en la pregunta que quieres aclarar.');
     return;
   }
   if (intencion?.accion === 'explicar_perfil') {
-    if (paso === 'resultado') mostrarMotivos();
-    else mostrarAyuda('Termina las preguntas del perfil y te explico qué respuestas llevaron al resultado.');
+    if (paso === 'resultado') {
+      registrar(pregunta, 'Mostré la explicación de tu perfil en pantalla.');
+      mostrarMotivos();
+    } else {
+      contestar('Termina las preguntas del perfil y te explico qué respuestas llevaron al resultado.');
+    }
     return;
   }
   if (intencion?.accion === 'simular_caida') {
     const escenario = ajustarCaida(intencion.porcentaje);
     actualizarVinculo();
-    mostrarAyuda(escenario
-      ? describirCaida(escenario)
-      : 'Ingresa los dos montos en el simulador y vuelve a indicar la caída.');
+    if (!escenario) {
+      contestar('Ingresa los dos montos en el simulador y vuelve a indicar la caída.');
+      return;
+    }
+    const cobertura = Math.round((100 * escenario.saldo) / escenario.meta);
+    contestar(`Simulé una caída del ${escenario.porcentaje} %. Tu meta quedaría cubierta al ${cobertura} %.`,
+      describirCaida(escenario));
     return;
   }
 
   const coincidencia = glosario.find(([patron]) => patron.test(texto));
   if (coincidencia) {
-    mostrarAyuda(coincidencia[1]);
+    contestar(coincidencia[1]);
     return;
   }
   if (falloDeepSeek) {

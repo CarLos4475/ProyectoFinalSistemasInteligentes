@@ -8,8 +8,8 @@
   <meta name="theme-color" content="#ece8f8">
   <title>Tolera · Perfil de inversión</title>
   <link rel="icon" href="./assets/marca-clay.webp" type="image/webp">
-  <link rel="stylesheet" href="./styles.css?v=12">
-  <script type="module" src="./chat.mjs?v=12"></script>
+  <link rel="stylesheet" href="./styles.css?v=13">
+  <script type="module" src="./chat.mjs?v=13"></script>
 </head>
 <body>
   <header class="header">
@@ -72,27 +72,26 @@
           </li>
         </ol>
       </section>
-      <section class="contenedor seccion-inicio empresas tarjeta-clay" aria-labelledby="titulo-empresas">
-        <p class="etiqueta">Para empresas</p>
-        <h2 id="titulo-empresas">Perfila a tus clientes con reglas que puedes explicar</h2>
-        <p class="empresas-bajada">Asesores financieros, cajas de ahorro y plataformas de inversión pueden integrar Tolera en su sitio. Cada cliente contesta el mismo cuestionario y la empresa recibe su perfil con las respuestas que lo explican.</p>
-        <ul class="lista-empresas">
+      <section class="contenedor seccion-inicio publico tarjeta-clay" aria-labelledby="titulo-publico">
+        <p class="etiqueta">Para quién es</p>
+        <h2 id="titulo-publico">Para quien empieza a invertir con una meta en mente</h2>
+        <p class="publico-bajada">Sabes cuánto necesitas y para cuándo, pero no cuánto riesgo puedes tomar. Tolera te ayuda a responder eso antes de elegir una inversión.</p>
+        <ul class="lista-publico">
           <li>
-            <h3>Con tu marca</h3>
-            <p>El simulador, el cuestionario y el chat aparecen con el nombre y los colores de tu empresa.</p>
+            <h3>Ves la caída en pesos</h3>
+            <p>Un 15 % dice poco hasta que lo ves sobre tu dinero. Tolera te muestra cuánto te quedaría y si todavía alcanzarías tu meta.</p>
           </li>
           <li>
-            <h3>Perfiles explicados</h3>
-            <p>Cada resultado indica qué límite fijaron el objetivo y el plazo, y qué respuestas marcaron la tolerancia a pérdidas.</p>
+            <h3>Tu plazo pone el límite</h3>
+            <p>Aunque aguantes caídas grandes, una meta cercana deja poco tiempo para recuperarse. El perfil toma en cuenta las dos cosas.</p>
           </li>
           <li>
-            <h3>Grupos de clientes</h3>
-            <p>Un análisis con K-modes reúne a los clientes que respondieron de forma parecida para que tu equipo prepare mensajes y productos para cada grupo.</p>
+            <h3>Sabes por qué te salió tu perfil</h3>
+            <p>Ves qué respuestas lo determinaron y qué preguntas llevarle a tu asesor. Si tienes dudas, el chat te las explica.</p>
           </li>
         </ul>
         <div class="acciones-portada">
-          <a class="accion" href="#cuestionario" data-vista="cuestionario">Prueba la demo</a>
-          <p class="empresas-nota">Es la misma experiencia que verían tus clientes.</p>
+          <button class="accion" type="button" data-abrir-simulador>Empieza con tu meta</button>
         </div>
       </section>
     </section>
@@ -170,6 +169,7 @@
           </header>
           <div class="chat-cuerpo">
             <div id="conversacion"></div>
+            <div id="hilo" class="hilo" aria-label="Conversación reciente" hidden></div>
             <p id="mensaje-usuario" class="mensaje-usuario" hidden></p>
             <div id="ayuda-respuesta" class="ayuda" role="status" hidden></div>
           </div>
@@ -179,7 +179,7 @@
               <input id="duda" name="duda" type="text" maxlength="480" placeholder="Escribe tu duda…" required>
               <button type="submit" class="boton-oscuro">Enviar</button>
             </form>
-            <p id="aviso-deepseek" class="aviso-deepseek" hidden>Al enviar, compartes tu mensaje y lo que ya marcaste en el cuestionario con DeepSeek. Evita incluir datos personales.</p>
+            <p id="aviso-deepseek" class="aviso-deepseek" hidden>Al enviar, compartes con DeepSeek tu mensaje, la conversación reciente, lo que marcaste en el cuestionario y los porcentajes de tu escenario. Tus montos en pesos no se envían. Evita incluir datos personales.</p>
           </footer>
         </div>
         <aside class="chat-lateral" id="chat-lateral">

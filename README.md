@@ -1,6 +1,6 @@
 # Tolera
 
-Tolera calcula si una caída hipotética pondría en riesgo una meta y explica el perfil de inversión con las respuestas que lo determinaron. El chat guía a la persona por las 14 preguntas del cuestionario. Las empresas pueden integrarlo en su sitio para perfilar a sus clientes.
+Tolera calcula si una caída hipotética pondría en riesgo una meta y explica el perfil de inversión con las respuestas que lo determinaron. Está pensado para personas que empiezan a invertir y tienen una meta con plazo. El chat guía a la persona por las 14 preguntas del cuestionario y recuerda la conversación reciente.
 
 [Abrir Tolera](https://sistemasinteligentesinversiopn.vercel.app/)
 
@@ -45,7 +45,7 @@ Sin `--formulario`, el análisis toma las respuestas directamente del Excel.
 
 Sin la clave, el simulador, el cuestionario y el chat local siguen disponibles.
 
-Al enviar una duda, DeepSeek recibe tu mensaje, la pregunta que estás viendo, sus opciones y lo que ya marcaste en el cuestionario. Ese contexto le permite responder sobre tus elecciones. Los montos del simulador se calculan en tu navegador. Si pides probar una caída o ver por qué te salió tu perfil, la página ejecuta esa acción con sus propias reglas. En GitHub Pages y cuando falla el proveedor, el chat usa sus explicaciones locales.
+Al enviar una duda, DeepSeek recibe tu mensaje, los últimos tres intercambios, la pregunta que estás viendo con sus opciones, lo que ya marcaste en el cuestionario, tu perfil si ya lo tienes y los porcentajes de tu escenario. Los montos en pesos se calculan en tu navegador y no se envían. Si pides probar una caída o ver por qué te salió tu perfil, la página ejecuta esa acción con sus propias reglas. En GitHub Pages y cuando falla el proveedor, el chat usa sus explicaciones locales.
 
 La función limita las consultas por instancia y usa un tiempo de espera de ocho segundos. Para una demo pública con la API activa, configura un límite en el [firewall de Vercel](https://vercel.com/docs/vercel-firewall/vercel-waf/custom-rules) para `POST /api/interpretar`. El límite del firewall abarca el despliegue, incluso si se ejecutan varias instancias.
 

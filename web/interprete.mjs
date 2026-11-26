@@ -10,12 +10,12 @@ export async function disponibleDeepSeek() {
   }
 }
 
-export async function interpretarDeepSeek(pregunta, paso, respuestas) {
+export async function interpretarDeepSeek({ pregunta, paso, respuestas, historial, escenario }) {
   try {
     const respuesta = await fetch(servicio, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ pregunta, paso, respuestas }),
+      body: JSON.stringify({ pregunta, paso, respuestas, historial, escenario }),
       signal: AbortSignal.timeout(9500),
     });
     return respuesta.ok ? await respuesta.json() : null;

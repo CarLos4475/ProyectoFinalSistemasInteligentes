@@ -25,8 +25,22 @@ export function leerEscenario() {
   if (base === null || meta === null || meta <= 0) return null;
   const porcentaje = Number(caida.value);
   return {
-    meta, porcentaje, plazo: plazo.value, ...simularCaida(base, meta, porcentaje),
+    disponible: base, meta, porcentaje, plazo: plazo.value, ...simularCaida(base, meta, porcentaje),
   };
+}
+
+export function compararCaida(escenario, porcentaje) {
+  return { ...escenario, porcentaje, ...simularCaida(escenario.disponible, escenario.meta, porcentaje) };
+}
+
+// Mayor caída entera que todavía deja cubierta la meta; -1 si ni sin caída alcanza.
+export function margenDeMeta(escenario) {
+  let margen = -1;
+  for (let porcentaje = 0; porcentaje <= 100; porcentaje += 1) {
+    if (simularCaida(escenario.disponible, escenario.meta, porcentaje).faltante) break;
+    margen = porcentaje;
+  }
+  return margen;
 }
 
 export function describirSaldo({ faltante, sobrante }) {

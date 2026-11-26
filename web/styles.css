@@ -376,6 +376,15 @@ body:has(.simulador[open]) { overflow: hidden; }
 .tarjeta-motivo ul { margin: 5px 0 9px; padding-left: 19px; }
 .tarjeta-motivo li + li { margin-top: 4px; }
 .resultado-lateral .respuestas { margin-top: 0; }
+.motivo-subtitulo { margin-top: 10px !important; font-weight: 800; }
+.motivo-nota { margin-top: 8px !important; color: var(--suave); font-size: .9rem; }
+.hilo { display: grid; gap: 0; }
+.hilo .ayuda--previa { width: fit-content; max-width: 85%; opacity: .85; }
+.umbrales { margin-top: 16px; padding: 16px 18px; border-radius: 24px; background: var(--campo); box-shadow: var(--hundida); }
+.umbrales h4 { margin: 0 0 6px; font-size: 1rem; font-weight: 800; color: var(--enlace); }
+.umbrales ul { margin: 0 0 8px; padding-left: 19px; }
+.umbrales li + li { margin-top: 4px; }
+.umbrales p { margin: 0; font-weight: 800; }
 
 .chat-pie { padding-top: 10px; background: var(--superficie); }
 .chat-pie form { display: flex; align-items: stretch; gap: 9px; }
@@ -401,8 +410,8 @@ body:has(.simulador[open]) { overflow: hidden; }
   font: 700 1.1rem/1 var(--titulo);
   box-shadow: var(--boton);
 }
-.empresas { margin-bottom: 72px; padding: 40px; }
-.empresas .etiqueta {
+.publico { margin-bottom: 72px; padding: 40px; }
+.publico .etiqueta {
   display: inline-block;
   margin-bottom: 14px;
   padding: 7px 16px;
@@ -410,12 +419,12 @@ body:has(.simulador[open]) { overflow: hidden; }
   background: var(--menta);
   color: var(--menta-tinta);
 }
-.empresas h2 { max-width: 22ch; margin-bottom: 14px; }
-.empresas-bajada { max-width: 62ch; font-size: 1.08rem; }
-.lista-empresas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 28px 0 8px; padding: 0; list-style: none; }
-.lista-empresas li { padding: 20px; border-radius: 24px; background: var(--campo); box-shadow: var(--hundida); }
-.lista-empresas h3 { margin-top: 0; }
-.empresas-nota { color: var(--suave); font-size: .95rem; }
+.publico h2 { max-width: 22ch; margin-bottom: 14px; }
+.publico-bajada { max-width: 62ch; font-size: 1.08rem; }
+.lista-publico { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 28px 0 8px; padding: 0; list-style: none; }
+.lista-publico li { padding: 20px; border-radius: 24px; background: var(--campo); box-shadow: var(--hundida); }
+.lista-publico h3 { margin-top: 0; }
+.publico-nota { color: var(--suave); font-size: .95rem; }
 .solo-lectores { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 @media (max-width: 999px) {
@@ -427,7 +436,7 @@ body:has(.simulador[open]) { overflow: hidden; }
   .esfera { display: none; }
   .simulador-cuadricula { gap: 24px; }
   .chat-lateral { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lista-pasos, .lista-empresas { grid-template-columns: minmax(0, 1fr); }
+  .lista-pasos, .lista-publico { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 640px) {
@@ -443,7 +452,7 @@ body:has(.simulador[open]) { overflow: hidden; }
   .chat-lateral { grid-template-columns: minmax(0, 1fr); }
   .portada { padding-top: 19px; }
   .seccion-inicio { padding-bottom: 44px; }
-  .empresas { margin-bottom: 44px; padding: 22px; border-radius: 30px; }
+  .publico { margin-bottom: 44px; padding: 22px; border-radius: 30px; }
   .lista-pasos li { padding: 20px; border-radius: 26px; }
   h1 { font-size: clamp(2.5rem, 10.5vw, 3.35rem); margin: 13px 0 12px; }
   .acciones-portada { display: grid; gap: 12px; margin-top: 21px; text-align: center; }
