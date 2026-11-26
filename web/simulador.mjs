@@ -3,7 +3,7 @@ import { leerMonto, simularCaida } from './escenario.mjs';
 const formulario = document.querySelector('#escenario');
 const disponible = formulario.querySelector('#disponible');
 const montoMeta = formulario.querySelector('#monto-meta');
-const plazo = formulario.querySelector('#plazo-meta');
+const plazo = formulario.elements.namedItem('plazo');
 const caida = formulario.querySelector('#caida');
 const indicador = formulario.querySelector('#caida-valor');
 const barraCaida = formulario.querySelector('#barra-caida');
@@ -50,7 +50,7 @@ function actualizar() {
     meta: escenario ? pesos(escenario.meta) : '—',
     pct: indicador.value,
     orb: caida.value === '0' ? indicador.value : `−${indicador.value}`,
-    plazo: plazo.selectedOptions[0].textContent,
+    plazo: formulario.querySelector('input[name="plazo"]:checked').labels[0].textContent.trim(),
     balance,
   };
   for (const [dato, texto] of Object.entries(textos)) {
@@ -74,6 +74,11 @@ export function ajustarCaida(porcentaje) {
   return actualizar();
 }
 
+export function restablecerEscenario() {
+  formulario.reset();
+  actualizar();
+}
+
 export function describirCaida(escenario) {
   return `Con una caída del ${escenario.porcentaje} %, quedarían ${pesos(escenario.saldo)}. ${describirSaldo(escenario)}`;
 }
@@ -86,7 +91,7 @@ export function iniciarSimulador(usarPlazo, alCambiar) {
   formulario.addEventListener('submit', (evento) => {
     evento.preventDefault();
     const escenario = leerEscenario();
-    if (escenario) usarPlazo(escenario.plazo);
+    if (escenario) usarPlazo(escenario);
   });
   actualizar();
 }

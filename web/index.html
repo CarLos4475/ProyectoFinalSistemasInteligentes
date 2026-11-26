@@ -8,30 +8,34 @@
   <meta name="theme-color" content="#ece8f8">
   <title>Perfil de inversión</title>
   <link rel="icon" href="./assets/marca-clay.webp" type="image/webp">
-  <link rel="stylesheet" href="./styles.css?v=8">
-  <script type="module" src="./chat.mjs?v=10"></script>
+  <link rel="stylesheet" href="./styles.css?v=11">
+  <script type="module" src="./chat.mjs?v=11"></script>
 </head>
 <body>
   <header class="header">
     <div class="contenedor cabecera">
-      <div class="marca">
+      <a class="marca" href="#inicio" data-vista="inicio">
         <img class="marca-icono" src="./assets/marca-clay.webp" width="48" height="48" alt="">
         <span>Perfil de inversión</span>
-      </div>
-      <span class="contexto">Proyecto académico</span>
+      </a>
+      <nav class="navegacion" aria-label="Vistas">
+        <a href="#inicio" data-vista="inicio" aria-current="page">Inicio</a>
+        <a href="#cuestionario" data-vista="cuestionario">Cuestionario</a>
+        <button type="button" id="nav-perfil" data-vista="perfil" disabled>Perfil</button>
+      </nav>
     </div>
   </header>
 
   <main>
-    <section class="introduccion" aria-labelledby="titulo">
+    <section class="introduccion" id="vista-inicio" aria-labelledby="titulo">
       <div class="contenedor portada">
         <div class="intro-texto">
           <p class="etiqueta">Sistema experto</p>
-          <h1 id="titulo">¿Una caída pondría en riesgo tu meta?</h1>
+          <h1 id="titulo" tabindex="-1">¿Una caída pondría en riesgo tu meta?</h1>
           <p class="bajada">Prueba cuánto dinero te quedaría si tu inversión pierde valor. Después, descubre cómo el plazo y tu tolerancia influyen en tu perfil de riesgo.</p>
           <div class="acciones-portada">
-            <a class="accion" href="#simulador">Probar una caída</a>
-            <a class="enlace-portada" href="#cuestionario">Ir al cuestionario</a>
+            <button class="accion" type="button" data-abrir-simulador>Probar una caída</button>
+            <a class="enlace-portada" href="#cuestionario" data-vista="cuestionario">Ir al cuestionario</a>
           </div>
         </div>
         <div class="portada-visual">
@@ -50,11 +54,13 @@
       </div>
     </section>
 
-    <div class="zona-simulador">
-      <section class="simulador contenedor" id="simulador" aria-labelledby="titulo-simulador" tabindex="-1">
+    <dialog class="simulador tarjeta-clay" id="modal-simulador" aria-labelledby="titulo-simulador">
         <header class="simulador-cabecera">
-          <h2 id="titulo-simulador">Prueba con tu meta</h2>
-          <p>El ejemplo parte de $10,000 disponibles y una meta de $9,000. Puedes cambiar ambos montos.</p>
+          <div>
+            <h2 id="titulo-simulador">Prueba con tu meta</h2>
+            <p>Puedes cambiar los montos, el plazo y la caída.</p>
+          </div>
+          <button type="button" class="boton-texto cerrar-simulador" id="cerrar-simulador" aria-label="Cerrar simulador" autofocus>×</button>
         </header>
         <div class="simulador-cuadricula">
           <form id="escenario" class="escenario">
@@ -66,13 +72,14 @@
                 <input id="monto-meta" type="number" inputmode="decimal" min="0.01" max="100000000" step="0.01" value="9000" required>
               </label>
             </div>
-            <label for="plazo-meta">Cuándo necesitas el dinero
-              <select id="plazo-meta">
-                <option value="A">En menos de 1 año</option>
-                <option value="B">En 1 a 3 años</option>
-                <option value="C">En más de 3 años</option>
-              </select>
-            </label>
+            <fieldset class="plazos" id="plazo-meta">
+              <legend>Cuándo necesitas el dinero</legend>
+              <div>
+                <label><input type="radio" name="plazo" value="A" checked><span>Menos de 1 año</span></label>
+                <label><input type="radio" name="plazo" value="B"><span>De 1 a 3 años</span></label>
+                <label><input type="radio" name="plazo" value="C"><span>Más de 3 años</span></label>
+              </div>
+            </fieldset>
             <div class="caida">
               <div>
                 <label for="caida">Caída simulada</label>
@@ -83,7 +90,6 @@
                 <input id="caida" type="range" min="0" max="100" step="1" value="15" aria-valuetext="15 por ciento">
               </div>
             </div>
-            <button class="boton-oscuro" type="submit">Usar este plazo en el cuestionario</button>
           </form>
           <div class="escenario-resultado tarjeta-clay" data-escenario-panel data-balance="faltante" role="status" aria-live="polite">
             <p id="escenario-titulo">Tu saldo después de la caída</p>
@@ -96,11 +102,16 @@
             <p class="escenario-nota">Escenario hipotético.</p>
           </div>
         </div>
-      </section>
-    </div>
+        <button class="boton-oscuro usar-plazo" type="submit" form="escenario">Usar este plazo en el cuestionario</button>
+    </dialog>
 
-    <div class="zona-chat">
-      <section class="chat contenedor" id="cuestionario" aria-labelledby="titulo-chat" tabindex="-1">
+    <div class="zona-chat" id="zona-chat" hidden>
+      <ol class="pasos contenedor" aria-label="Progreso del recorrido">
+        <li data-paso="simular"><button type="button" data-abrir-simulador><span class="paso-numero" aria-hidden="true">1</span> <span>Simular</span></button></li>
+        <li data-paso="cuestionario" aria-current="step"><span class="paso-numero" aria-hidden="true">2</span> <span>Cuestionario</span></li>
+        <li data-paso="perfil"><span class="paso-numero" aria-hidden="true">3</span> <span>Perfil</span></li>
+      </ol>
+      <section class="chat contenedor" id="vista-cuestionario" aria-labelledby="titulo-chat">
         <div class="chat-panel tarjeta-clay">
           <header class="chat-cabecera">
             <img class="asistente" src="./assets/asistente-clay.webp" width="49" height="49" alt="">
@@ -108,22 +119,25 @@
               <h2 id="titulo-chat">Chat de perfil</h2>
               <p id="progreso">Pregunta 1 de 14</p>
             </div>
-            <button type="button" class="boton-texto" id="reiniciar" hidden>Reiniciar</button>
+            <div class="acciones-chat">
+              <button type="button" class="boton-texto" id="modo-demo">Modo demo</button>
+              <button type="button" class="boton-texto" id="reiniciar" hidden>Reiniciar</button>
+            </div>
             <progress class="barra-chat" id="barra-chat" value="0" max="14" aria-label="Respuestas registradas"></progress>
           </header>
           <div class="chat-cuerpo">
             <div id="conversacion"></div>
+            <p id="mensaje-usuario" class="mensaje-usuario" hidden></p>
             <div id="ayuda-respuesta" class="ayuda" role="status" hidden></div>
           </div>
           <footer class="chat-pie">
             <form id="consulta" autocomplete="off">
               <label class="solo-lectores" for="duda">Pregunta al chat</label>
-              <input id="duda" name="duda" type="text" maxlength="480" placeholder="Escribe tu duda sobre la pregunta o el simulador" required>
+              <input id="duda" name="duda" type="text" maxlength="480" placeholder="Escribe tu duda…" required>
               <button type="submit" class="boton-oscuro">Enviar</button>
             </form>
             <p id="aviso-deepseek" class="aviso-deepseek" hidden>Al enviar, compartes tu mensaje y lo que ya marcaste en el cuestionario con DeepSeek. Evita incluir datos personales.</p>
           </footer>
-          <noscript><p class="sin-script">Activa JavaScript para usar el cuestionario.</p></noscript>
         </div>
         <aside class="chat-lateral" id="chat-lateral">
           <section class="tarjeta-clay resumen-lateral" data-escenario-panel data-balance="faltante" aria-labelledby="escenario-lateral">
@@ -131,10 +145,16 @@
             <p class="saldo" data-escenario-saldo>$8,500</p>
             <p class="chip-balance" data-escenario-balance>Faltan $500</p>
             <p class="datos-lateral">Caída del <span data-escenario-pct>15 %</span> <span aria-hidden="true">·</span> <span data-escenario-plazo>En menos de 1 año</span></p>
+            <button type="button" class="boton-texto abrir-lateral" data-abrir-simulador>Simular una caída</button>
           </section>
-          <section class="tarjeta-clay resumen-lateral" aria-labelledby="liquidez-lateral">
-            <h3 id="liquidez-lateral">¿Qué es la liquidez?</h3>
-            <p>Es la facilidad de convertir una inversión en dinero disponible.</p>
+          <section class="tarjeta-clay resumen-lateral" aria-labelledby="terminos-lateral">
+            <h3 id="terminos-lateral">Términos</h3>
+            <dl class="terminos">
+              <dt>Liquidez</dt>
+              <dd>Facilidad de convertir una inversión en dinero disponible.</dd>
+              <dt>Plazo</dt>
+              <dd>Tiempo que puedes dejar el dinero invertido antes de necesitarlo.</dd>
+            </dl>
           </section>
         </aside>
       </section>
@@ -142,6 +162,7 @@
   </main>
   <footer class="pie">
     <p class="contenedor alcance">El perfil es orientativo. El simulador trabaja con caídas hipotéticas.</p>
+    <noscript><p class="contenedor sin-script">Activa JavaScript para usar el simulador y el cuestionario.</p></noscript>
   </footer>
 </body>
 </html>

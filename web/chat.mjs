@@ -1,10 +1,14 @@
 import { aclaracionCaida, preguntas } from './cuestionario.mjs?v=7';
 import { disponibleDeepSeek, interpretarDeepSeek } from './interprete.mjs?v=9';
 import { evaluarPerfil } from './perfil.mjs?v=2';
-import { ajustarCaida, describirCaida, iniciarSimulador, leerEscenario } from './simulador.mjs?v=6';
+import { ajustarCaida, describirCaida, iniciarSimulador, leerEscenario, restablecerEscenario } from './simulador.mjs?v=11';
 
 const orden = Object.keys(preguntas);
 const catalogo = { ...preguntas, aclaracion: aclaracionCaida };
+const respuestasDemo = {
+  p1: 'C', p2: 'B', p3: 'B', p4: 'A', p5: 'C', p6: 'B', p7: 'B',
+  p8: 'C', p9: 'C', p10: 'D', p11: 'A', p12: 'B', p13: 'B', p14: 'B',
+};
 const perfiles = {
   conservador: 'Conservador',
   moderado: 'Moderado',
@@ -37,10 +41,19 @@ const glosario = [
 const conversacion = document.querySelector('#conversacion');
 const progreso = document.querySelector('#progreso');
 const barraChat = document.querySelector('#barra-chat');
-const chat = document.querySelector('#cuestionario');
+const inicio = document.querySelector('#vista-inicio');
+const zonaChat = document.querySelector('#zona-chat');
+const chat = document.querySelector('#vista-cuestionario');
+const cabeceraChat = chat.querySelector('.chat-cabecera');
 const chatLateral = document.querySelector('#chat-lateral');
+const mensajeUsuario = document.querySelector('#mensaje-usuario');
 const ayuda = document.querySelector('#ayuda-respuesta');
 const reiniciar = document.querySelector('#reiniciar');
+const demo = document.querySelector('#modo-demo');
+const enlacePerfil = document.querySelector('#nav-perfil');
+const enlacesVista = document.querySelectorAll('.navegacion [data-vista]');
+const pasosVista = document.querySelectorAll('[data-paso]');
+const dialogo = document.querySelector('#modal-simulador');
 const formulario = document.querySelector('#consulta');
 const duda = document.querySelector('#duda');
 const enviar = formulario.querySelector('button[type="submit"]');
@@ -48,7 +61,9 @@ const avisoDeepSeek = document.querySelector('#aviso-deepseek');
 
 const respuestas = {};
 let editando = null;
-let explicar = false;
+let vista = 'inicio';
+let usoSimulador = false;
+let mostrandoDemo = false;
 let revisionChat = 0;
 
 function elemento(tag, clase, texto) {
@@ -69,41 +84,56 @@ function ocultarAyuda() {
   revisionChat += 1;
   ayuda.hidden = true;
   ayuda.textContent = '';
+  mensajeUsuario.hidden = true;
+  mensajeUsuario.textContent = '';
 }
 
-function seleccionar(paso, valor) {
+function navegar(destino, enfocar = true, desdeURL = false) {
+  const perfilListo = evaluarPerfil(respuestas).paso === 'resultado';
+  if (destino === 'perfil' && !perfilListo) {
+    destino = 'cuestionario';
+    if (desdeURL) history.replaceState(null, '', '#cuestionario');
+  }
+  if (vista !== destino) {
+    ocultarAyuda();
+    if (dialogo.open) dialogo.close();
+    window.scrollTo(0, 0);
+  }
+  vista = destino;
+  if (vista === 'perfil') editando = null;
+  if (!desdeURL && location.hash !== `#${vista}`) history.pushState(null, '', `#${vista}`);
+  renderizar(enfocar);
+}
+
+function continuar() {
+  navegar(evaluarPerfil(respuestas).paso === 'resultado' ? 'perfil' : 'cuestionario');
+}
+
+function seleccionar(paso, valor, destino) {
   if (paso === 'p9' && respuestas.p9 !== valor) delete respuestas.aclaracion;
   respuestas[paso] = valor;
   editando = null;
-  explicar = false;
   ocultarAyuda();
-  renderizar(true);
+  if (destino) navegar(destino);
+  else continuar();
 }
 
 function editar(paso) {
   editando = paso;
   ocultarAyuda();
-  renderizar(true);
+  navegar('cuestionario');
 }
 
 function mostrarMotivos() {
-  explicar = true;
   ocultarAyuda();
-  renderizar(true);
+  navegar('perfil', false);
+  const encabezado = document.querySelector('#titulo-motivos');
+  encabezado.focus({ preventScroll: true });
+  encabezado.scrollIntoView({ block: 'center', inline: 'nearest' });
 }
 
 function textoRespuesta(paso) {
   return catalogo[paso].opciones[respuestas[paso]];
-}
-
-function razonPrincipal(resultado) {
-  if (resultado.perfil === resultado.limite.nivel) {
-    if (resultado.perfil === 'propenso') {
-      return 'Tu objetivo y tu plazo admiten un nivel alto, y tus respuestas sobre pérdidas apuntan a ese mismo nivel.';
-    }
-    return limites[resultado.limite.razones[0]];
-  }
-  return `El resultado se basa en tu tolerancia ${tolerancias[resultado.tolerancia.nivel]} a pérdidas. El chat la calcula con tu reacción, la caída que te haría actuar y tu preferencia de riesgo.`;
 }
 
 function describirSenales(tolerancia) {
@@ -166,7 +196,8 @@ function actualizarVinculo() {
 function renderizarResultado(resultado) {
   const tarjeta = elemento('article', `resultado resultado--${resultado.perfil}`);
   tarjeta.id = 'resultado';
-  const titulo = elemento('h3', '', perfiles[resultado.perfil]);
+  const titulo = elemento('h2', '', perfiles[resultado.perfil]);
+  titulo.id = 'perfil-titulo';
   titulo.tabIndex = -1;
   const lateral = elemento('div', 'resultado-lateral');
   const ficha = elemento('div', 'resultado-perfil tarjeta-clay');
@@ -177,45 +208,40 @@ function renderizarResultado(resultado) {
     if (resultado.perfil === nivel) item.setAttribute('aria-current', 'true');
     escala.append(item);
   }
-  ficha.append(elemento('p', 'etiqueta', 'Tu perfil · orientativo'), titulo, escala);
+  ficha.append(
+    elemento('p', 'etiqueta', mostrandoDemo ? 'Perfil de ejemplo' : 'Tu perfil · orientativo'),
+    titulo,
+    escala,
+    elemento('p', 'resultado-texto', 'El perfil toma el nivel más bajo entre tu tolerancia y el máximo que fijan tu objetivo y tu plazo.'),
+  );
   lateral.append(ficha);
-  tarjeta.append(lateral);
-  let destino = titulo;
+  const escenario = elemento('section', 'resultado-escenario');
+  const vinculo = elemento('p');
+  vinculo.id = 'vinculo-escenario';
+  escenario.append(elemento('h4', '', 'Escenario activo'), vinculo);
+  lateral.append(escenario);
+  renderizarRespuestas(lateral);
+  lateral.append(boton('Volver a empezar', 'boton-texto', reiniciarCuestionario));
 
-  if (explicar) {
-    tarjeta.classList.add('resultado--explicado');
-    const detalle = elemento('div', 'motivos');
-    detalle.id = 'motivos';
-    const encabezado = elemento('h4', '', 'Por qué te salió este perfil');
-    encabezado.tabIndex = -1;
-    const { limite, tolerancia } = resultado;
-    const vinculo = elemento('p');
-    vinculo.id = 'vinculo-escenario';
-    const escenario = elemento('section', 'resultado-escenario');
-    escenario.append(elemento('h4', '', 'Escenario activo'), vinculo);
-    lateral.append(escenario);
-
-    ficha.append(elemento('p', 'resultado-texto', 'El perfil toma el nivel más bajo entre tu tolerancia y el máximo que fijan tu objetivo y tu plazo.'));
-    detalle.append(encabezado);
-    for (const [tema, ...contenido] of [
-      ['Objetivo y plazo', elemento('p', '', limite.razones.map((razon) => limites[razon]).join(' '))],
-      ['Tolerancia a pérdidas', describirSenales(tolerancia), elemento('p', '', explicarTolerancia(tolerancia))],
-      ['Tu experiencia', elemento('p', '', describirExperiencia())],
-    ]) {
-      const tarjetaMotivo = elemento('section', 'tarjeta-motivo tarjeta-clay');
-      tarjetaMotivo.append(elemento('h5', '', tema), ...contenido);
-      detalle.append(tarjetaMotivo);
-    }
-    tarjeta.append(detalle);
-    destino = encabezado;
-  } else {
-    ficha.append(
-      elemento('p', 'resultado-texto', razonPrincipal(resultado)),
-      boton('¿Por qué me salió este perfil?', 'boton-explicar', mostrarMotivos),
-    );
+  const detalle = elemento('div', 'motivos');
+  detalle.id = 'motivos';
+  const encabezado = elemento('h3', '', mostrandoDemo ? 'Por qué el ejemplo da este perfil' : 'Por qué te salió este perfil');
+  encabezado.id = 'titulo-motivos';
+  encabezado.tabIndex = -1;
+  const { limite, tolerancia } = resultado;
+  detalle.append(encabezado);
+  for (const [tema, ...contenido] of [
+    ['Objetivo y plazo', elemento('p', '', limite.razones.map((razon) => limites[razon]).join(' '))],
+    ['Tolerancia a pérdidas', describirSenales(tolerancia), elemento('p', '', explicarTolerancia(tolerancia))],
+    ['Tu experiencia', elemento('p', '', describirExperiencia())],
+  ]) {
+    const motivo = elemento('section', 'tarjeta-motivo tarjeta-clay');
+    motivo.append(elemento('h4', '', tema), ...contenido);
+    detalle.append(motivo);
   }
+  tarjeta.append(lateral, detalle);
   conversacion.append(tarjeta);
-  return destino;
+  return titulo;
 }
 
 function renderizarPregunta(paso) {
@@ -240,7 +266,7 @@ function renderizarPregunta(paso) {
     caja.append(boton('Volver', 'boton-texto volver', () => {
       editando = null;
       ocultarAyuda();
-      renderizar(true);
+      continuar();
     }));
   } else if (indice > 0) {
     caja.append(boton('Anterior', 'boton-texto volver', () => editar(orden[indice - 1])));
@@ -278,36 +304,116 @@ function renderizarRespuestas(padre) {
 
 function renderizar(enfocar = false) {
   const resultado = evaluarPerfil(respuestas);
+  const perfilListo = resultado.paso === 'resultado';
+  const enPerfil = vista === 'perfil';
+  inicio.hidden = vista !== 'inicio';
+  zonaChat.hidden = vista === 'inicio';
+  enlacePerfil.disabled = !perfilListo;
+  for (const enlace of enlacesVista) {
+    if (enlace.dataset.vista === vista) enlace.setAttribute('aria-current', 'page');
+    else enlace.removeAttribute('aria-current');
+  }
+  for (const [indice, item] of pasosVista.entries()) {
+    const paso = item.dataset.paso;
+    const completo = (paso === 'simular' && usoSimulador) || (paso === 'cuestionario' && enPerfil);
+    item.classList.toggle('hecho', completo);
+    const numero = item.querySelector('.paso-numero');
+    numero.textContent = completo ? '✓' : String(indice + 1);
+    if (paso === vista) item.setAttribute('aria-current', 'step');
+    else item.removeAttribute('aria-current');
+  }
+  if (vista === 'inicio') {
+    if (enfocar) document.querySelector('#titulo').focus({ preventScroll: true });
+    return;
+  }
+
   const paso = editando ?? resultado.paso;
-  chat.classList.toggle('chat--resultado', paso === 'resultado');
-  chatLateral.hidden = paso === 'resultado';
-  barraChat.value = orden.filter((id) => respuestas[id]).length;
+  chat.classList.toggle('chat--resultado', enPerfil);
+  chat.setAttribute('aria-labelledby', enPerfil ? 'perfil-titulo' : 'titulo-chat');
+  cabeceraChat.hidden = enPerfil;
+  chatLateral.hidden = enPerfil;
+  const respondidas = orden.filter((id) => respuestas[id]).length;
+  barraChat.value = respondidas;
   if (paso === 'resultado') {
-    progreso.textContent = 'Resultado';
+    progreso.textContent = 'Cuestionario completo';
   } else if (paso === 'aclaracion') {
     progreso.textContent = 'Una aclaración';
   } else {
     progreso.textContent = `Pregunta ${orden.indexOf(paso) + 1} de ${orden.length}`;
   }
-  reiniciar.hidden = Object.keys(respuestas).length === 0;
+  demo.hidden = respondidas > 0;
+  reiniciar.hidden = respondidas === 0;
   conversacion.replaceChildren();
-  const destino = paso === 'resultado' ? renderizarResultado(resultado) : renderizarPregunta(paso);
-  renderizarRespuestas(conversacion.querySelector('.resultado-lateral') ?? conversacion);
+  let destino;
+  if (enPerfil) {
+    destino = renderizarResultado(resultado);
+  } else {
+    if (paso === 'resultado') {
+      destino = elemento('h3', 'pregunta', 'Ya completaste el cuestionario');
+      destino.tabIndex = -1;
+      conversacion.append(destino, boton('Ver mi perfil', 'boton-oscuro', () => navegar('perfil')));
+    } else {
+      destino = renderizarPregunta(paso);
+    }
+    renderizarRespuestas(conversacion);
+  }
   actualizarVinculo();
   if (enfocar) {
     destino.focus({ preventScroll: true });
-    destino.scrollIntoView({ block: 'center', inline: 'nearest' });
+    destino.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 }
 
-reiniciar.addEventListener('click', () => {
+function reiniciarCuestionario() {
   for (const clave of Object.keys(respuestas)) delete respuestas[clave];
   editando = null;
-  explicar = false;
+  usoSimulador = false;
+  mostrandoDemo = false;
   duda.value = '';
   ocultarAyuda();
-  renderizar(true);
+  navegar('cuestionario');
+}
+
+reiniciar.addEventListener('click', reiniciarCuestionario);
+demo.addEventListener('click', () => {
+  if (Object.keys(respuestas).length) return;
+  restablecerEscenario();
+  Object.assign(respuestas, respuestasDemo);
+  usoSimulador = true;
+  mostrandoDemo = true;
+  duda.value = '';
+  continuar();
 });
+
+function abrirSimulador() {
+  if (!dialogo.open) dialogo.showModal();
+}
+
+function irSegunURL(enfocar) {
+  const fragmento = location.hash.slice(1);
+  const destino = fragmento === 'perfil' || fragmento === 'cuestionario' ? fragmento : 'inicio';
+  navegar(destino, enfocar, true);
+  if (fragmento === 'simulador') abrirSimulador();
+}
+
+for (const enlace of document.querySelectorAll('[data-vista]')) {
+  enlace.addEventListener('click', (evento) => {
+    if (evento.ctrlKey || evento.metaKey || evento.altKey || evento.shiftKey) return;
+    evento.preventDefault();
+    navegar(enlace.dataset.vista);
+  });
+}
+for (const botonSimulador of document.querySelectorAll('[data-abrir-simulador]')) {
+  botonSimulador.addEventListener('click', abrirSimulador);
+}
+document.querySelector('#cerrar-simulador').addEventListener('click', () => dialogo.close());
+dialogo.addEventListener('click', (evento) => {
+  if (evento.target !== dialogo) return;
+  const rect = dialogo.getBoundingClientRect();
+  if (evento.clientX < rect.left || evento.clientX > rect.right
+      || evento.clientY < rect.top || evento.clientY > rect.bottom) dialogo.close();
+});
+window.addEventListener('hashchange', () => irSegunURL(true));
 
 function mostrarAyuda(texto) {
   ayuda.hidden = false;
@@ -342,6 +448,8 @@ formulario.addEventListener('submit', async (evento) => {
   let intencion = interpretarLocal(texto);
   let falloDeepSeek = false;
   duda.value = '';
+  mensajeUsuario.textContent = pregunta;
+  mensajeUsuario.hidden = false;
 
   if (!avisoDeepSeek.hidden) {
     enviar.disabled = true;
@@ -396,8 +504,13 @@ disponibleDeepSeek().then((disponible) => {
   avisoDeepSeek.hidden = !disponible;
   if (disponible) duda.setAttribute('aria-describedby', avisoDeepSeek.id);
 });
-iniciarSimulador((plazo) => seleccionar('p4', plazo), () => {
+iniciarSimulador((escenario) => {
+  usoSimulador = true;
+  dialogo.close();
+  seleccionar('p4', escenario.plazo, 'cuestionario');
+  mostrarAyuda(describirCaida(escenario));
+}, () => {
   if (enviar.disabled) ocultarAyuda();
   actualizarVinculo();
 });
-renderizar();
+irSegunURL(false);
