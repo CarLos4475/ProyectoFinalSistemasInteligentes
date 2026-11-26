@@ -221,6 +221,43 @@ d.parrafo("Si no saben algo, digan «no lo medimos» o «queda como trabajo futu
           "funciona mejor que una explicación larga. Ensayen en voz alta las repreguntas difíciles, sobre todo la "
           "circularidad del árbol y el origen de los datos.")
 
+# 5c --------------------------------------------------------------------------
+d.seccion("Decisiones de diseño y UX")
+d.parrafo("Si preguntan por qué la página se ve y funciona así, estas son las decisiones que ya están en el "
+          "producto y la razón de cada una.")
+d.tabla([
+    ["Decisión", "Por qué"],
+    ["Empezar por la caída en pesos y después el cuestionario",
+     "El primer problema del público es que un porcentaje le dice poco. Ver su meta en pesos le da un motivo para "
+     "contestar el resto."],
+    ["Una pregunta a la vez, guiada por el chat",
+     "Reduce la carga para quien nunca ha invertido. Las dudas se resuelven en el momento, sin salir del cuestionario."],
+    ["Pregunta de aclaración solo cuando cambia el perfil",
+     "No agrega preguntas innecesarias. Solo 31 de 350 casos la necesitaron."],
+    ["Botón «Ver un ejemplo»", "Permite explorar un resultado completo sin contestar las 14 preguntas."],
+    ["Tarjetas de «Por qué te salió este perfil»",
+     "La explicación es la propuesta de valor. Cada tarjeta responde una parte: plazo, tolerancia, tolerancia en "
+     "pesos, experiencia y siguiente paso."],
+    ["Coral para «te falta» y menta para «cubres tu meta»", "El color adelanta el resultado antes de leer la cifra."],
+    ["Aviso de privacidad junto a Enviar", "La persona sabe qué se comparte con el chat antes de escribir."],
+    ["Glosario lateral y lenguaje sencillo", "El público empieza desde cero. Términos como liquidez o plazo se "
+                                            "explican en la misma pantalla."],
+    ["Accesibilidad", "Los resultados se anuncian a lectores de pantalla, el foco se mueve al cambiar de vista y la "
+                      "página respeta las opciones de reducir movimiento y alto contraste."],
+    ["Sin frameworks ni scripts externos", "La página carga rápido y la política de seguridad solo permite código "
+                                          "propio."],
+], [190, 330])
+d.subtitulo("Repreguntas sobre diseño")
+d.tabla([
+    ["Repregunta", "Respuesta"],
+    ["«¿Lo probaron con usuarios?»", "Todavía no. Las decisiones se basan en el perfil del público y en los datos de "
+                                     "los 350 casos. Una prueba de uso es el siguiente paso."],
+    ["«¿Por qué un chat y no un formulario?»", "Porque quien empieza tiene dudas en cada pregunta. El chat las "
+                                               "resuelve sin que la persona abandone el cuestionario."],
+    ["«¿Funciona en celular?»", "Sí. Se probó a 390 píxeles de ancho, sin desplazamiento horizontal, y el campo del "
+                                "chat queda fijo abajo."],
+], [190, 330])
+
 # 6 ---------------------------------------------------------------------------
 d.seccion("Qué evitar y plan B")
 d.subtitulo("Durante el pitch")
