@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explora tu perfil de riesgo y entiende qué respuestas explican tu resultado.">
+  <meta name="description" content="Tolera calcula cuánto le quedaría a tu meta tras una caída y explica tu perfil de riesgo con las respuestas que lo determinaron.">
   <meta name="theme-color" content="#ece8f8">
-  <title>Perfil de inversión</title>
+  <title>Tolera · Perfil de inversión</title>
   <link rel="icon" href="./assets/marca-clay.webp" type="image/webp">
-  <link rel="stylesheet" href="./styles.css?v=11">
-  <script type="module" src="./chat.mjs?v=11"></script>
+  <link rel="stylesheet" href="./styles.css?v=12">
+  <script type="module" src="./chat.mjs?v=12"></script>
 </head>
 <body>
   <header class="header">
     <div class="contenedor cabecera">
       <a class="marca" href="#inicio" data-vista="inicio">
         <img class="marca-icono" src="./assets/marca-clay.webp" width="48" height="48" alt="">
-        <span>Perfil de inversión</span>
+        <span>Tolera</span>
       </a>
       <nav class="navegacion" aria-label="Vistas">
         <a href="#inicio" data-vista="inicio" aria-current="page">Inicio</a>
@@ -30,7 +30,7 @@
     <section class="introduccion" id="vista-inicio" aria-labelledby="titulo">
       <div class="contenedor portada">
         <div class="intro-texto">
-          <p class="etiqueta">Sistema experto</p>
+          <p class="etiqueta">Antes de invertir</p>
           <h1 id="titulo" tabindex="-1">¿Una caída pondría en riesgo tu meta?</h1>
           <p class="bajada">Prueba cuánto dinero te quedaría si tu inversión pierde valor. Después, descubre cómo el plazo y tu tolerancia influyen en tu perfil de riesgo.</p>
           <div class="acciones-portada">
@@ -52,6 +52,49 @@
           <div class="esfera esfera-menta" aria-hidden="true"></div>
         </div>
       </div>
+      <section class="contenedor seccion-inicio" aria-labelledby="titulo-funciona">
+        <h2 id="titulo-funciona">Cómo funciona</h2>
+        <ol class="lista-pasos">
+          <li class="tarjeta-clay">
+            <span class="paso-numero" aria-hidden="true">1</span>
+            <h3>Prueba una caída</h3>
+            <p>Escribe cuánto tienes, cuánto necesitas y para cuándo. Tolera calcula el saldo que te quedaría con la caída que elijas.</p>
+          </li>
+          <li class="tarjeta-clay">
+            <span class="paso-numero" aria-hidden="true">2</span>
+            <h3>Responde el cuestionario</h3>
+            <p>Son 14 preguntas sobre tu meta, tu plazo y cómo reaccionas ante las pérdidas. Si alguna no te queda clara, pregúntale al chat.</p>
+          </li>
+          <li class="tarjeta-clay">
+            <span class="paso-numero" aria-hidden="true">3</span>
+            <h3>Entiende tu perfil</h3>
+            <p>Recibes un perfil conservador, moderado o propenso al riesgo, junto con las respuestas que lo determinaron.</p>
+          </li>
+        </ol>
+      </section>
+      <section class="contenedor seccion-inicio empresas tarjeta-clay" aria-labelledby="titulo-empresas">
+        <p class="etiqueta">Para empresas</p>
+        <h2 id="titulo-empresas">Perfila a tus clientes con reglas que puedes explicar</h2>
+        <p class="empresas-bajada">Asesores financieros, cajas de ahorro y plataformas de inversión pueden integrar Tolera en su sitio. Cada cliente contesta el mismo cuestionario y la empresa recibe su perfil con las respuestas que lo explican.</p>
+        <ul class="lista-empresas">
+          <li>
+            <h3>Con tu marca</h3>
+            <p>El simulador, el cuestionario y el chat aparecen con el nombre y los colores de tu empresa.</p>
+          </li>
+          <li>
+            <h3>Perfiles explicados</h3>
+            <p>Cada resultado indica qué límite fijaron el objetivo y el plazo, y qué respuestas marcaron la tolerancia a pérdidas.</p>
+          </li>
+          <li>
+            <h3>Grupos de clientes</h3>
+            <p>Un análisis con K-modes reúne a los clientes que respondieron de forma parecida para que tu equipo prepare mensajes y productos para cada grupo.</p>
+          </li>
+        </ul>
+        <div class="acciones-portada">
+          <a class="accion" href="#cuestionario" data-vista="cuestionario">Prueba la demo</a>
+          <p class="empresas-nota">Es la misma experiencia que verían tus clientes.</p>
+        </div>
+      </section>
     </section>
 
     <dialog class="simulador tarjeta-clay" id="modal-simulador" aria-labelledby="titulo-simulador">
@@ -120,7 +163,7 @@
               <p id="progreso">Pregunta 1 de 14</p>
             </div>
             <div class="acciones-chat">
-              <button type="button" class="boton-texto" id="modo-demo">Modo demo</button>
+              <button type="button" class="boton-texto" id="modo-demo">Ver un ejemplo</button>
               <button type="button" class="boton-texto" id="reiniciar" hidden>Reiniciar</button>
             </div>
             <progress class="barra-chat" id="barra-chat" value="0" max="14" aria-label="Respuestas registradas"></progress>
@@ -161,7 +204,7 @@
     </div>
   </main>
   <footer class="pie">
-    <p class="contenedor alcance">El perfil es orientativo. El simulador trabaja con caídas hipotéticas.</p>
+    <p class="contenedor alcance">Tolera da un perfil orientativo y no recomienda inversiones concretas. El simulador trabaja con caídas hipotéticas.</p>
     <noscript><p class="contenedor sin-script">Activa JavaScript para usar el simulador y el cuestionario.</p></noscript>
   </footer>
 </body>

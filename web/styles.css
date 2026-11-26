@@ -384,6 +384,38 @@ body:has(.simulador[open]) { overflow: hidden; }
 .aviso-deepseek { margin: 8px 0 0; font-size: .85rem; color: var(--suave); }
 .pie { padding: 0 0 28px; text-align: center; }
 .alcance, .sin-script { color: var(--suave); font-size: .92rem; }
+.seccion-inicio { padding-block: 0 72px; }
+.seccion-inicio h2 { margin: 0 0 24px; font: 700 clamp(1.8rem, 3.6vw, 2.6rem)/1.1 var(--titulo); }
+.seccion-inicio h3 { margin: 12px 0 6px; font: 700 1.25rem/1.2 var(--titulo); }
+.seccion-inicio p { margin: 0; color: var(--secundario); }
+.lista-pasos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 0; padding: 0; list-style: none; }
+.lista-pasos li { padding: 26px; border-radius: 32px; }
+.lista-pasos .paso-numero {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primario);
+  color: #fff;
+  font: 700 1.1rem/1 var(--titulo);
+  box-shadow: var(--boton);
+}
+.empresas { margin-bottom: 72px; padding: 40px; }
+.empresas .etiqueta {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 7px 16px;
+  border-radius: var(--pastilla);
+  background: var(--menta);
+  color: var(--menta-tinta);
+}
+.empresas h2 { max-width: 22ch; margin-bottom: 14px; }
+.empresas-bajada { max-width: 62ch; font-size: 1.08rem; }
+.lista-empresas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 28px 0 8px; padding: 0; list-style: none; }
+.lista-empresas li { padding: 20px; border-radius: 24px; background: var(--campo); box-shadow: var(--hundida); }
+.lista-empresas h3 { margin-top: 0; }
+.empresas-nota { color: var(--suave); font-size: .95rem; }
 .solo-lectores { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 @media (max-width: 999px) {
@@ -395,6 +427,7 @@ body:has(.simulador[open]) { overflow: hidden; }
   .esfera { display: none; }
   .simulador-cuadricula { gap: 24px; }
   .chat-lateral { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lista-pasos, .lista-empresas { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 640px) {
@@ -409,6 +442,9 @@ body:has(.simulador[open]) { overflow: hidden; }
   .pasos li:not([aria-current="step"]) span:not(.paso-numero) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .chat-lateral { grid-template-columns: minmax(0, 1fr); }
   .portada { padding-top: 19px; }
+  .seccion-inicio { padding-bottom: 44px; }
+  .empresas { margin-bottom: 44px; padding: 22px; border-radius: 30px; }
+  .lista-pasos li { padding: 20px; border-radius: 26px; }
   h1 { font-size: clamp(2.5rem, 10.5vw, 3.35rem); margin: 13px 0 12px; }
   .acciones-portada { display: grid; gap: 12px; margin-top: 21px; text-align: center; }
   .accion { width: 100%; min-height: 50px; }

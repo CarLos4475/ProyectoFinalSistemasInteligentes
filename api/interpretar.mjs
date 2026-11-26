@@ -30,7 +30,7 @@ const tools = [
   },
 ];
 
-const sistema = 'Eres el asistente de un simulador académico de caídas y un cuestionario de perfil de inversión. '
+const sistema = 'Eres el asistente de Tolera, un simulador de caídas con un cuestionario de perfil de inversión. '
   + 'Responde directamente en español claro y texto plano, en dos a cuatro frases. '
   + 'Si la persona plantea un caso, usa solo los datos que dio y evita añadir casos hipotéticos. '
   + 'Si la persona dice que no entiende, explica en palabras sencillas la pregunta que ve. '

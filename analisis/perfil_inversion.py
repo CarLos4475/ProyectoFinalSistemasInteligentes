@@ -1,4 +1,5 @@
-"""Audita el Excel, evalúa las reglas de la web y agrupa respuestas con K-modes."""
+"""Audita el Excel, evalúa las reglas de la web, agrupa respuestas con K-modes
+y mide con un árbol de decisión cuántas preguntas bastan para anticipar el perfil."""
 
 import argparse
 from collections import Counter
@@ -11,7 +12,15 @@ from kmodes.kmodes import KModes
 import numpy as np
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
+from sklearn.base import clone
 from sklearn.metrics import silhouette_score
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.tree import DecisionTreeClassifier
+
+from catalogo import cargar_preguntas
+from limpieza import comparar_con_excel, limpiar_formulario
 
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -20,6 +29,15 @@ VARIABLES_KMODES = ("p1", "p4", "p8", "p9", "p10")
 ESTADOS = ("conservador", "moderado", "propenso", "aclaracion")
 SEED = 42
 REINICIOS = 20
+GRUPOS_K = range(2, 6)
+INICIALIZACIONES = ("Huang", "Cao")
+PLIEGUES = 5
+PROFUNDIDAD_COMPACTA = 4
+REJILLA_ARBOL = {
+    "decisiontreeclassifier__max_depth": [1, 2, 3, 4, 5, 6, None],
+    "decisiontreeclassifier__min_samples_leaf": [1, 5, 10],
+    "decisiontreeclassifier__criterion": ["gini", "entropy"],
+}
 FILTROS = (
     ("P6", "A", "Medios propios (P6)"),
     ("P14", "A", "Tipos de inversión no financiera (P14)"),
@@ -119,18 +137,22 @@ def auditar_baremo(path, registros):
 def agrupar(casos, preguntas, estados):
     datos = np.array([[caso[clave] for clave in VARIABLES_KMODES] for caso in casos])
     distancias = (datos[:, None] != datos[None, :]).mean(axis=2)
+    # Búsqueda en cuadrícula: cada combinación de k e inicialización se califica con la silueta.
     candidatos = []
     ajustes = {}
-    for k in range(2, 6):
-        modelo = KModes(n_clusters=k, init="Huang", n_init=REINICIOS, random_state=SEED)
-        grupos = modelo.fit_predict(datos)
-        if len(set(grupos)) != k:
-            raise ValueError(f"K-modes solo produjo {len(set(grupos))} grupos para k={k}.")
-        puntuacion = float(silhouette_score(distancias, grupos, metric="precomputed"))
-        candidatos.append({"k": k, "silueta": puntuacion, "grupo_menor": min(Counter(grupos).values())})
-        ajustes[k] = (modelo, grupos)
-    elegido = max(candidatos, key=lambda candidato: candidato["silueta"])["k"]
-    modelo, grupos = ajustes[elegido]
+    for k in GRUPOS_K:
+        for inicio in INICIALIZACIONES:
+            modelo = KModes(n_clusters=k, init=inicio, n_init=REINICIOS, random_state=SEED)
+            grupos = modelo.fit_predict(datos)
+            if len(set(grupos)) != k:
+                continue
+            puntuacion = float(silhouette_score(distancias, grupos, metric="precomputed"))
+            candidatos.append({"k": k, "inicio": inicio, "silueta": puntuacion,
+                               "grupo_menor": min(Counter(grupos).values())})
+            ajustes[k, inicio] = (modelo, grupos)
+    mejor = max(candidatos, key=lambda candidato: candidato["silueta"])
+    elegido = mejor["k"]
+    modelo, grupos = ajustes[elegido, mejor["inicio"]]
     tamanos = Counter(grupos)
     resumen = []
     for etiqueta, grupo in enumerate(sorted(tamanos, key=lambda g: (-tamanos[g], g)), start=1):
@@ -143,12 +165,81 @@ def agrupar(casos, preguntas, estados):
             "estados": {estado: estados_grupo[estado] for estado in ESTADOS},
         })
     return {"variables": VARIABLES_KMODES, "semilla": SEED, "reinicios": REINICIOS,
-            "candidatos": candidatos, "k": elegido, "grupos": resumen}
+            "candidatos": candidatos, "k": elegido, "inicio": mejor["inicio"], "grupos": resumen}
 
 
-def analizar(path):
+def clasificar(casos, estados):
+    """Árbol de decisión que anticipa la salida de las reglas a partir de P1 a P14.
+
+    La búsqueda de profundidad responde una pregunta de producto: cuántas preguntas
+    hacen falta para llegar al mismo resultado que el cuestionario completo.
+    """
+    datos = np.array([[caso[clave] for clave in PREGUNTAS] for caso in casos])
+    objetivo = np.array(estados)
+    entrena_x, prueba_x, entrena_y, prueba_y = train_test_split(
+        datos, objetivo, test_size=0.25, stratify=objetivo, random_state=SEED)
+    tuberia = make_pipeline(OneHotEncoder(handle_unknown="ignore"),
+                            DecisionTreeClassifier(random_state=SEED))
+    busqueda = GridSearchCV(
+        tuberia, REJILLA_ARBOL, scoring="accuracy",
+        cv=StratifiedKFold(n_splits=PLIEGUES, shuffle=True, random_state=SEED),
+    )
+    busqueda.fit(entrena_x, entrena_y)
+
+    resultados = busqueda.cv_results_
+    por_profundidad = {}
+    for parametros, media in zip(resultados["params"], resultados["mean_test_score"]):
+        profundidad = parametros["decisiontreeclassifier__max_depth"] or "sin límite"
+        por_profundidad[profundidad] = max(por_profundidad.get(profundidad, 0.0), float(media))
+
+    def preguntas_usadas(modelo):
+        codificador, arbol = modelo.named_steps.values()
+        columnas = codificador.get_feature_names_out([clave.upper() for clave in PREGUNTAS])
+        return sorted({columna.split("_")[0] for columna, peso in zip(columnas, arbol.feature_importances_)
+                       if peso > 0}, key=lambda clave: int(clave[1:]))
+
+    mejor = busqueda.best_estimator_
+    arbol = mejor.named_steps["decisiontreeclassifier"]
+    usadas = preguntas_usadas(mejor)
+
+    # Árbol compacto: la mejor combinación con profundidad 4, más fácil de leer y explicar.
+    candidatos = [(media, parametros) for parametros, media in zip(resultados["params"], resultados["mean_test_score"])
+                  if parametros["decisiontreeclassifier__max_depth"] == PROFUNDIDAD_COMPACTA]
+    media_compacta, parametros_compactos = max(candidatos, key=lambda par: par[0])
+    compacto = clone(tuberia).set_params(**parametros_compactos).fit(entrena_x, entrena_y)
+    return {
+        "modelo": "DecisionTreeClassifier",
+        "casos_entrenamiento": len(entrena_y),
+        "casos_prueba": len(prueba_y),
+        "pliegues": PLIEGUES,
+        "combinaciones_probadas": len(resultados["params"]),
+        "mejores_parametros": {clave.split("__")[1]: valor for clave, valor in busqueda.best_params_.items()},
+        "exactitud_validacion": float(busqueda.best_score_),
+        "exactitud_prueba": float(mejor.score(prueba_x, prueba_y)),
+        "exactitud_por_profundidad": {str(clave): valor for clave, valor in por_profundidad.items()},
+        "preguntas_usadas": usadas,
+        "profundidad_real": int(arbol.get_depth()),
+        "hojas": int(arbol.get_n_leaves()),
+        "compacto": {
+            "parametros": {clave.split("__")[1]: valor for clave, valor in parametros_compactos.items()},
+            "exactitud_validacion": float(media_compacta),
+            "exactitud_prueba": float(compacto.score(prueba_x, prueba_y)),
+            "preguntas_usadas": preguntas_usadas(compacto),
+            "hojas": int(compacto.named_steps["decisiontreeclassifier"].get_n_leaves()),
+        },
+    }
+
+
+def analizar(path, formulario=None):
     registros = cargar_excel(path)
-    casos, cambios = normalizar(registros)
+    limpieza = None
+    if formulario:
+        limpios, reporte = limpiar_formulario(formulario, cargar_preguntas())
+        reporte["coincidencia_con_excel"] = comparar_con_excel(limpios, registros)
+        limpieza = reporte
+        casos, cambios = [{clave: caso[clave] for clave in PREGUNTAS} for caso in limpios], 0
+    else:
+        casos, cambios = normalizar(registros)
     preguntas, estados = aplicar_reglas(casos)
     frecuencias = {}
     for clave in PREGUNTAS:
@@ -158,6 +249,7 @@ def analizar(path):
     estado = Counter(estados)
     return {
         "archivo": path.name,
+        "limpieza": limpieza,
         "casos": len(casos),
         "preguntas": len(PREGUNTAS),
         "normalizaciones": cambios,
@@ -173,15 +265,17 @@ def analizar(path):
         "reglas": {nombre: estado[nombre] for nombre in ESTADOS},
         "p9_sin_umbral": sum(caso["p9"] == "D" for caso in casos),
         "kmodes": agrupar(casos, preguntas, estados),
+        "arbol": clasificar(casos, estados),
     }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("excel", type=Path, help="Ruta a perfil_inversionista_350_respuestas.xlsx")
+    parser.add_argument("--formulario", type=Path, help="CSV del formulario que se limpia antes del análisis")
     parser.add_argument("--salida", type=Path, help="Archivo JSON para guardar los resultados agregados")
     args = parser.parse_args()
-    texto = json.dumps(analizar(args.excel), ensure_ascii=False, indent=2) + "\n"
+    texto = json.dumps(analizar(args.excel, args.formulario), ensure_ascii=False, indent=2, default=str) + "\n"
     if args.salida:
         args.salida.write_text(texto, encoding="utf-8")
     else:

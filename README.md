@@ -1,8 +1,8 @@
-# Perfil de inversión
+# Tolera
 
-Página interactiva para probar si una caída hipotética pondría en riesgo una meta. El chat te guía por las 14 preguntas del cuestionario y te explica qué respuestas determinaron el perfil.
+Tolera calcula si una caída hipotética pondría en riesgo una meta y explica el perfil de inversión con las respuestas que lo determinaron. El chat guía a la persona por las 14 preguntas del cuestionario. Las empresas pueden integrarlo en su sitio para perfilar a sus clientes.
 
-[Abrir la página publicada](https://carlos4475.github.io/ProyectoFinalSistemasInteligentes/)
+[Abrir Tolera](https://sistemasinteligentesinversiopn.vercel.app/)
 
 ## Abrir en tu equipo
 
@@ -20,19 +20,21 @@ El equipo retomó las 14 preguntas de perfilamiento del Excel. El objetivo y el 
 
 Los 350 casos de prueba del Excel sirven para comprobar qué reglas se activan y explorar patrones de respuesta. La [especificación del cuestionario completo](docs/superpowers/specs/2026-11-23-cuestionario-completo-design.md) explica cada criterio.
 
-El resultado es orientativo y forma parte de un proyecto académico.
+El resultado es orientativo. Tolera no recomienda inversiones concretas.
 
 ## Documentación y análisis
 
 - [Documentación técnica](docs/DOCUMENTACION_TECNICA.pdf)
 - [Documentación de negocio](docs/DOCUMENTACION_NEGOCIO.pdf)
 
-Para repetir la revisión del Excel y el análisis con K-modes, usa Python 3.11 o posterior y Node.js. Indica la ruta de tu archivo de trabajo.
+El análisis limpia las respuestas del formulario, revisa el Excel, agrupa los casos con K-modes y entrena un árbol de decisión con GridSearchCV. Necesitas Python 3.11 o posterior y Node.js. Indica la ruta de tus archivos.
 
 ```text
 python -m pip install -r analisis/requirements.txt
-python analisis/perfil_inversion.py "perfil_inversionista_350_respuestas.xlsx" --salida resultados.json
+python analisis/perfil_inversion.py "perfil_inversionista_350_respuestas.xlsx" --formulario respuestas.csv --salida resultados.json
 ```
+
+Sin `--formulario`, el análisis toma las respuestas directamente del Excel.
 
 ## Publicar en Vercel
 
