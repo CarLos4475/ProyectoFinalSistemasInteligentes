@@ -195,6 +195,7 @@ d.tabla([
                                          "conversación."],
 ], [160, 360])
 
+d.historia.append(PageBreak())
 d.subtitulo("Nube y trabajo futuro")
 d.tabla([
     ["Pregunta", "Respuesta corta"],
@@ -208,7 +209,6 @@ d.tabla([
                                           "equivalencias de cada opción son criterio del equipo."],
 ], [190, 330])
 
-d.historia.append(PageBreak())
 d.subtitulo("Reparto y reglas para responder")
 d.tabla([
     ["Tema", "Quién responde"],
