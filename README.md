@@ -45,7 +45,7 @@ Sin `--formulario`, el análisis toma las respuestas directamente del Excel.
 
 Sin la clave, el simulador, el cuestionario y el chat local siguen disponibles.
 
-Al enviar una duda, DeepSeek recibe tu mensaje, los últimos tres intercambios, la pregunta que estás viendo con sus opciones, lo que ya marcaste en el cuestionario, tu perfil si ya lo tienes y los porcentajes de tu escenario. Los montos en pesos se calculan en tu navegador y no se envían. Si pides probar una caída o ver por qué te salió tu perfil, la página ejecuta esa acción con sus propias reglas. En GitHub Pages y cuando falla el proveedor, el chat usa sus explicaciones locales.
+Al enviar una duda, DeepSeek recibe tu mensaje, los últimos tres intercambios, la pregunta que estás viendo con sus opciones, lo que ya marcaste en el cuestionario, tu perfil si ya lo tienes y los porcentajes de tu escenario. Puedes preguntarle, por ejemplo, qué marcaste en la pregunta 7 mientras estás en la 10. Los montos que capturas en el simulador se quedan en tu navegador. Si pides probar una caída o ver por qué te salió tu perfil, la página ejecuta esa acción con sus propias reglas. En GitHub Pages y cuando falla el proveedor, el chat usa sus explicaciones locales.
 
 La función limita las consultas por instancia y usa un tiempo de espera de ocho segundos. Para una demo pública con la API activa, configura un límite en el [firewall de Vercel](https://vercel.com/docs/vercel-firewall/vercel-waf/custom-rules) para `POST /api/interpretar`. El límite del firewall abarca el despliegue, incluso si se ejecutan varias instancias.
 

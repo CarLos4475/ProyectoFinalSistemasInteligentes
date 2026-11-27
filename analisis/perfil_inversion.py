@@ -143,12 +143,13 @@ def agrupar(casos, preguntas, estados):
     ajustes = {}
     for k in GRUPOS_K:
         for inicio in INICIALIZACIONES:
-            modelo = KModes(n_clusters=k, init=inicio, n_init=REINICIOS, random_state=SEED)
+            reinicios = REINICIOS if inicio == "Huang" else 1
+            modelo = KModes(n_clusters=k, init=inicio, n_init=reinicios, random_state=SEED)
             grupos = modelo.fit_predict(datos)
             if len(set(grupos)) != k:
                 continue
             puntuacion = float(silhouette_score(distancias, grupos, metric="precomputed"))
-            candidatos.append({"k": k, "inicio": inicio, "silueta": puntuacion,
+            candidatos.append({"k": k, "inicio": inicio, "reinicios": modelo.n_init, "silueta": puntuacion,
                                "grupo_menor": min(Counter(grupos).values())})
             ajustes[k, inicio] = (modelo, grupos)
     mejor = max(candidatos, key=lambda candidato: candidato["silueta"])

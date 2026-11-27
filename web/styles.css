@@ -440,7 +440,7 @@ body:has(.simulador[open]) { overflow: hidden; }
 }
 
 @media (max-width: 640px) {
-  html { scroll-padding-block: 115px 150px; }
+  html { scroll-padding-block: 115px var(--espacio-pie-chat, 150px); }
   .contenedor { width: calc(100% - 36px); }
   .cabecera { flex-wrap: wrap; justify-content: center; gap: 6px; padding-block: 7px; }
   .marca { font-size: 1.12rem; gap: 8px; }

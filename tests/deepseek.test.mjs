@@ -86,6 +86,30 @@ test('incluye únicamente las opciones ya registradas como contexto del cuestion
   assert.deepEqual(await response.json(), { accion: 'responder', texto });
 });
 
+test('identifica la pregunta 10 y las nueve respuestas guardadas por su número', async () => {
+  const respuestas = { p1: 'C', p2: 'B', p3: 'B', p4: 'A', p5: 'AyB', p6: 'B', p7: 'A', p8: 'C', p9: 'C' };
+  const pregunta = '¿Qué respondí en la 7 y en la 9? ¿Ya contesté la 10?';
+  const texto = 'En P7 elegiste tu propio análisis y en P9 marcaste 20 %. P10 sigue pendiente.';
+  const handler = crearInterpretador({
+    clave: 'ficticia',
+    enviar: async (_, options) => {
+      const { messages } = JSON.parse(options.body);
+      const sistema = messages[0].content;
+      assert.match(sistema, /Pregunta activa \(P10\)/);
+      assert.match(sistema, /9 de 14 preguntas respondidas/);
+      assert.deepEqual([...sistema.matchAll(/^- (P\d+) · /gm)].map((m) => m[1]),
+        ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9']);
+      assert.match(sistema, /P7 · Forma de decidir: Mi propio análisis/);
+      assert.match(sistema, /P9 · Límite de pérdida: Al caer 20 %/);
+      assert.doesNotMatch(sistema, /Perfil calculado por las reglas:/);
+      assert.deepEqual(messages.at(-1), { role: 'user', content: pregunta });
+      return Response.json({ choices: [{ message: { content: texto } }] });
+    },
+  });
+  const response = await handler(solicitud({ pregunta, paso: 'p10', respuestas }));
+  assert.deepEqual(await response.json(), { accion: 'responder', texto });
+});
+
 test('rechaza respuestas ambiguas o campos inventados por el modelo', async () => {
   for (const functions of [
     [simular({ porcentaje: 150 })],

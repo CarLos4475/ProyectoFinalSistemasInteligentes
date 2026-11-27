@@ -26,6 +26,17 @@ FECHA_ISO = re.compile(r"^(\d{4})-(\d{1,2})-(\d{1,2})")
 FECHA_DMY = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{4})")
 FECHA_TEXTO = re.compile(r"^(\d{1,2}) ([a-z]{3}) (\d{4})$")
 NUMERO = re.compile(r"\d+")
+CODIGO_PREGUNTA = re.compile(r"^(p\d+)\b")
+CAMPOS_FORMULARIO = {
+    "fecha": "Marca temporal",
+    "nombre": "Nombre completo",
+    "edad": "Edad",
+    "autoevaluacion": "Antes de empezar, ¿cómo describirías tu perfil?",
+    "medios": "¿Qué medios usas para evaluar una inversión?",
+    "tipos_no_financieros": "¿En qué tipo de inversiones no financieras?",
+    "de_acuerdo": "¿Estás de acuerdo con el perfil que te asignamos?",
+    "perfil_sugerido": "¿Qué perfil consideras correcto?",
+}
 
 
 def normalizar(texto):
@@ -120,9 +131,32 @@ def limpiar_si_no(texto):
     return {"si": "Sí", "s": "Sí", "no": "No", "n": "No"}.get(normalizar(texto))
 
 
+def posiciones_formulario(encabezados):
+    esperados = {**CAMPOS_FORMULARIO, **{clave: clave.upper() for clave in PREGUNTAS}}
+    por_encabezado = {normalizar(texto): campo for campo, texto in esperados.items()}
+    posiciones = {}
+    for indice, encabezado in enumerate(encabezados):
+        texto = normalizar(encabezado)
+        campo = por_encabezado.get(texto)
+        if campo is None and (codigo := CODIGO_PREGUNTA.match(texto)):
+            campo = codigo[1]
+        if campo not in esperados:
+            continue
+        if campo in posiciones:
+            raise ValueError(f"Encabezado duplicado para {esperados[campo]}.")
+        posiciones[campo] = indice
+    faltan = [texto for campo, texto in esperados.items() if campo not in posiciones]
+    if faltan:
+        raise ValueError("Faltan columnas del formulario: " + ", ".join(faltan))
+    return posiciones
+
+
 def limpiar_formulario(path, preguntas):
     with open(path, newline="", encoding="utf-8-sig") as archivo:
-        encabezados, *filas = csv.reader(archivo)
+        lector = csv.reader(archivo)
+        encabezados = next(lector, [])
+        posiciones = posiciones_formulario(encabezados)
+        filas = list(lector)
 
     limpiador = Limpiador(preguntas)
     resumen = Counter()
@@ -133,26 +167,28 @@ def limpiar_formulario(path, preguntas):
         if not any(celda.strip() for celda in fila):
             resumen["filas_vacias"] += 1
             continue
-        fecha, nombre, edad, antes, *respuestas = fila
-        respuestas, (medios, tipos, acuerdo, sugerido) = respuestas[:14], respuestas[14:]
+        if len(fila) != len(encabezados):
+            raise ValueError(f"La fila {numero} tiene {len(fila)} columnas. Se esperaban {len(encabezados)}.")
+        datos = {campo: fila[indice] for campo, indice in posiciones.items()}
 
-        nombre_limpio = ESPACIOS.sub(" ", nombre).strip().title()
+        nombre_limpio = ESPACIOS.sub(" ", datos["nombre"]).strip().title()
         if normalizar(nombre_limpio) in vistos:
             resumen["duplicados"] += 1
             continue
         vistos.add(normalizar(nombre_limpio))
 
-        fecha_limpia, formato = limpiar_fecha(fecha)
+        fecha_limpia, formato = limpiar_fecha(datos["fecha"])
         formatos_fecha[formato] += 1
-        edad_limpia = limpiar_edad(edad)
+        edad_limpia = limpiar_edad(datos["edad"])
         resumen["edades_invalidas"] += edad_limpia is None
+        sugerido = datos["perfil_sugerido"]
         caso = {
             "nombre": nombre_limpio, "fecha": fecha_limpia, "edad": edad_limpia,
-            "autoevaluacion": parecido(antes, PERFILES_EXCEL),
-            **{clave: limpiador.opcion(clave, valor, numero) for clave, valor in zip(PREGUNTAS, respuestas)},
-            "medios": limpiador.lista(medios, MEDIOS, "medios", numero),
-            "tipos_no_financieros": limpiador.lista(tipos, TIPOS_NO_FINANCIEROS, "tipos", numero),
-            "de_acuerdo": limpiar_si_no(acuerdo),
+            "autoevaluacion": parecido(datos["autoevaluacion"], PERFILES_EXCEL),
+            **{clave: limpiador.opcion(clave, datos[clave], numero) for clave in PREGUNTAS},
+            "medios": limpiador.lista(datos["medios"], MEDIOS, "medios", numero),
+            "tipos_no_financieros": limpiador.lista(datos["tipos_no_financieros"], TIPOS_NO_FINANCIEROS, "tipos", numero),
+            "de_acuerdo": limpiar_si_no(datos["de_acuerdo"]),
             "perfil_sugerido": parecido(sugerido, PERFILES_EXCEL) if sugerido.strip() else None,
         }
         casos.append(caso)

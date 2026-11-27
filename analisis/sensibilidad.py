@@ -74,26 +74,31 @@ def sensibilidad(casos, estados_web):
         nuevo = [evaluar(caso, aplicar(cambios)) for caso in casos]
         pares = [(a, b) for a, b in zip(base, nuevo) if a != b]
         niveles = [(ORDEN[a], ORDEN[b]) for a, b in pares if a in ORDEN and b in ORDEN]
+        entran_aclaracion = sum(b == "aclaracion" for _, b in pares)
+        salen_aclaracion = sum(a == "aclaracion" for a, _ in pares)
         filas.append({
             "decision": nombre,
             "cambian": len(pares),
             "porcentaje": round(100 * len(pares) / len(casos), 1),
             "suben": sum(b > a for a, b in niveles),
             "bajan": sum(b < a for a, b in niveles),
-            "aclaracion": len(pares) - len(niveles),
+            "aclaracion": entran_aclaracion + salen_aclaracion,
+            "entran_aclaracion": entran_aclaracion,
+            "salen_aclaracion": salen_aclaracion,
             "saltos_de_dos_niveles": sum(abs(b - a) > 1 for a, b in niveles),
         })
     return filas
 
 
 def sensibilidad_baremo(registros, cortes=(26, 27, 29, 30)):
-    """Misma prueba sobre el baremo anterior: mover el corte Moderado/Propenso (28 puntos)."""
+    """Mueve el corte de 28 puntos sin alterar la excepción «Sofisticado» del Excel."""
     def perfil(puntaje, corte):
         return "adverso" if puntaje <= 14 else "moderado" if puntaje <= corte else "propenso"
 
-    puntajes = [registro["Puntaje"] for registro in registros]
+    puntajes = [registro["Puntaje"] for registro in registros
+                if str(registro["P10"]).strip().upper() != "A"]
     filas = []
     for corte in cortes:
         cambian = sum(perfil(p, 28) != perfil(p, corte) for p in puntajes)
-        filas.append({"corte": corte, "cambian": cambian, "porcentaje": round(100 * cambian / len(puntajes), 1)})
+        filas.append({"corte": corte, "cambian": cambian, "porcentaje": round(100 * cambian / len(registros), 1)})
     return filas

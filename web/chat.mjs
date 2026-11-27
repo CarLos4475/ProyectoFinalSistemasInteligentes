@@ -65,6 +65,7 @@ const enlacesVista = document.querySelectorAll('.navegacion [data-vista]');
 const pasosVista = document.querySelectorAll('[data-paso]');
 const dialogo = document.querySelector('#modal-simulador');
 const formulario = document.querySelector('#consulta');
+const pieChat = formulario.closest('.chat-pie');
 const duda = document.querySelector('#duda');
 const enviar = formulario.querySelector('button[type="submit"]');
 const avisoDeepSeek = document.querySelector('#aviso-deepseek');
@@ -252,14 +253,30 @@ function describirExperiencia() {
   return `${experiencia} ${mercados[respuestas.p5]} ${analisis} Para decidir, elegiste «${textoRespuesta('p7')}».`;
 }
 
-function actualizarVinculo() {
-  const vinculo = document.querySelector('#vinculo-escenario');
-  if (!vinculo) return;
+function actualizarEscenarioVinculado() {
+  const usado = escenarioUsado();
+  const escenario = usado?.plazo === respuestas.p4 ? usado : null;
+  const vinculo = conversacion.querySelector('#vinculo-escenario');
+  const tolerancia = conversacion.querySelector('#tolerancia-pesos');
+  const comparacion = conversacion.querySelector('.umbrales');
 
-  const escenario = leerEscenario();
-  const coincide = escenario?.plazo === respuestas.p4;
-  vinculo.closest('.resultado-escenario').hidden = !coincide;
-  vinculo.textContent = coincide ? describirCaida(escenario) : '';
+  if (vinculo) {
+    vinculo.closest('.resultado-escenario').hidden = !escenario;
+    vinculo.textContent = escenario ? describirCaida(escenario) : '';
+  }
+  if (tolerancia) {
+    tolerancia.closest('.tarjeta-motivo').hidden = !escenario;
+    tolerancia.textContent = escenario ? toleranciaEnPesos(escenario) : '';
+  }
+  if (comparacion) {
+    comparacion.hidden = !escenario;
+    if (escenario) {
+      for (const renglon of comparacion.querySelectorAll('[data-umbral]')) {
+        renglon.textContent = describirCaida(compararCaida(escenario, Number(renglon.dataset.umbral)));
+      }
+      comparacion.querySelector('p').textContent = textoMargen(escenario);
+    }
+  }
 }
 
 function renderizarResultado(resultado) {
@@ -303,8 +320,9 @@ function renderizarResultado(resultado) {
     ['Objetivo y plazo', elemento('p', '', limite.razones.map((razon) => limites[razon]).join(' '))],
     ['Tolerancia a pérdidas', describirSenales(tolerancia), elemento('p', '', explicarTolerancia(tolerancia))],
   ];
-  const escenarioActual = escenarioUsado();
-  if (escenarioActual) tarjetas.push(['Tu tolerancia en pesos', elemento('p', '', toleranciaEnPesos(escenarioActual))]);
+  const toleranciaPesos = elemento('p');
+  toleranciaPesos.id = 'tolerancia-pesos';
+  tarjetas.push(['Tu tolerancia en pesos', toleranciaPesos]);
   tarjetas.push(['Tu experiencia', elemento('p', '', describirExperiencia())]);
   const preguntasAsesor = elemento('ul');
   for (const texto of [
@@ -345,14 +363,15 @@ function renderizarPregunta(paso) {
     opciones.append(control);
   }
   caja.append(titulo, opciones);
-  const escenario = escenarioUsado();
-  if ((paso === 'p9' || paso === 'aclaracion') && escenario) {
+  if (paso === 'p9' || paso === 'aclaracion') {
     const bloque = elemento('section', 'umbrales');
     const lista = elemento('ul');
     for (const porcentaje of Object.values(umbrales)) {
-      lista.append(elemento('li', '', describirCaida(compararCaida(escenario, porcentaje))));
+      const renglon = elemento('li');
+      renglon.dataset.umbral = porcentaje;
+      lista.append(renglon);
     }
-    bloque.append(elemento('h4', '', 'Estas caídas con tu escenario'), lista, elemento('p', '', textoMargen(escenario)));
+    bloque.append(elemento('h4', '', 'Estas caídas con tu escenario'), lista, elemento('p'));
     caja.append(bloque);
   }
   conversacion.append(caja);
@@ -453,7 +472,7 @@ function renderizar(enfocar = false) {
     }
     renderizarRespuestas(conversacion);
   }
-  actualizarVinculo();
+  actualizarEscenarioVinculado();
   if (enfocar) {
     destino.focus({ preventScroll: true });
     destino.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -591,7 +610,7 @@ formulario.addEventListener('submit', async (evento) => {
   }
   if (intencion?.accion === 'simular_caida') {
     const escenario = ajustarCaida(intencion.porcentaje);
-    actualizarVinculo();
+    actualizarEscenarioVinculado();
     if (!escenario) {
       contestar('Ingresa los dos montos en el simulador y vuelve a indicar la caída.');
       return;
@@ -619,6 +638,10 @@ disponibleDeepSeek().then((disponible) => {
   avisoDeepSeek.hidden = !disponible;
   if (disponible) duda.setAttribute('aria-describedby', avisoDeepSeek.id);
 });
+new ResizeObserver(() => {
+  const espacio = Math.ceil(pieChat.getBoundingClientRect().height) + 12;
+  document.documentElement.style.setProperty('--espacio-pie-chat', `${espacio}px`);
+}).observe(pieChat);
 iniciarSimulador((escenario) => {
   usoSimulador = true;
   dialogo.close();
@@ -626,6 +649,6 @@ iniciarSimulador((escenario) => {
   mostrarAyuda(describirCaida(escenario));
 }, () => {
   if (enviar.disabled) ocultarAyuda();
-  actualizarVinculo();
+  actualizarEscenarioVinculado();
 });
 irSegunURL(false);

@@ -18,6 +18,7 @@ const razonesLimite = {
 };
 const nivelesTolerancia = { conservador: 'baja', moderado: 'intermedia', propenso: 'alta' };
 const catalogo = { ...preguntas, aclaracion: aclaracionCaida };
+const totalPreguntas = Object.keys(preguntas).length;
 const sinCoincidencia = { accion: 'sin_coincidencia' };
 const tools = [
   {
@@ -49,7 +50,8 @@ const sistema = 'Eres el asistente de Tolera, un simulador de caídas con un cue
   + 'Si la persona dice que no entiende, explica en palabras sencillas la pregunta que ve. '
   + 'Si pregunta por una opción concreta, explica esa opción y usa el orden en que aparecen. '
   + 'Si describe una situación y pregunta qué opción encaja, relaciónala con las opciones visibles. '
-  + 'Usa las respuestas registradas cuando ayuden a contestar la duda. Distingue lo que la persona ya marcó de las opciones que todavía puede elegir. '
+  + 'Usa las respuestas registradas cuando ayuden a contestar la duda. Si la persona pregunta por un número como «la 7», busca P7 en las respuestas registradas. '
+  + 'Distingue lo que ya marcó de las opciones de la pregunta activa. Si la conversación anterior menciona una elección distinta, toma como vigente la del cuestionario. '
   + 'Si te pregunta por una respuesta que no tienes registrada, dilo. No deduzcas su perfil a partir de un cuestionario incompleto. '
   + 'Puedes explicar conceptos del cuestionario y del simulador. Mantén el enfoque educativo y evita recomendar inversiones concretas o prometer rendimientos. '
   + 'Elige una sola función cuando corresponda. Usa simular_caida solo si se pide '
@@ -66,17 +68,21 @@ function contextoDelPaso(paso) {
   if (paso === 'resultado') return '\nLa persona está viendo el resultado de su perfil.';
   const activa = catalogo[paso];
   if (!activa) return '';
+  const numero = paso === 'aclaracion' ? 'aclaración de P9' : paso.toUpperCase();
   const opciones = Object.values(activa.opciones).map((opcion, i) => `${i + 1}. ${opcion}`);
-  return `\nPregunta que ve la persona: ${activa.texto}\nOpciones en pantalla:\n${opciones.join('\n')}\nGuía del cuestionario: ${activa.ayuda}`;
+  return `\nPregunta activa (${numero}): ${activa.texto}\nOpciones en pantalla:\n${opciones.join('\n')}\nGuía del cuestionario: ${activa.ayuda}`;
 }
 
 function contextoDeRespuestas(respuestas) {
-  const elegidas = Object.entries(catalogo)
+  const elegidas = Object.entries(preguntas)
     .filter(([paso]) => Object.hasOwn(respuestas, paso))
-    .map(([paso, pregunta]) => `- ${pregunta.tema}: ${pregunta.opciones[respuestas[paso]]}`);
-  return elegidas.length
-    ? `\nRespuestas registradas hasta ahora:\n${elegidas.join('\n')}`
-    : '\nTodavía no hay respuestas registradas en el contexto.';
+    .map(([paso, pregunta]) => `- ${paso.toUpperCase()} · ${pregunta.tema}: ${pregunta.opciones[respuestas[paso]]}`);
+  if (!elegidas.length) return '\nTodavía no hay respuestas registradas en el contexto.';
+  const avance = `\nRespuestas registradas (${elegidas.length} de ${totalPreguntas} preguntas respondidas):`;
+  if (respuestas.aclaracion) {
+    elegidas.push(`- Aclaración de P9: ${aclaracionCaida.opciones[respuestas.aclaracion]}`);
+  }
+  return `${avance}\n${elegidas.join('\n')}`;
 }
 
 function contextoDelPerfil(respuestas) {
